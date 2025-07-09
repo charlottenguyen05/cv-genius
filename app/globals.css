@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -25,3 +49,49 @@
     @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
   }
 } 
+
+@keyframes fade-in { 
+  from { 
+    opacity: 0; 
+    /* 🔧 SUGGESTION: Ajouter transform pour un effet plus riche */
+    /* transform: translateY(-10px); */
+  } 
+  to { 
+    opacity: 1; 
+    /* transform: translateY(0); */
+  } 
+}
+
+.animate-fade-in { 
+  animation: fade-in 0.3s ease;
+  /* 🔧 SUGGESTION: Easing plus naturel et support fallback */
+  /* animation: fade-in 0.3s cubic-bezier(0.4, 0, 0.2, 1); */
+  /* will-change: opacity, transform; */ /* Optimisation performance */
+}
+
+/* 🔧 SUGGESTION: Ajouter d'autres animations réutilisables
+@keyframes slide-in-right {
+  from { 
+    opacity: 0; 
+    transform: translateX(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateX(0); 
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+*/

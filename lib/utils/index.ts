@@ -30,6 +30,7 @@ export function isValidEmail(email: string): boolean {
   return emailRegex.test(email)
 }
 
+
 /**
  * Nettoyer et formater du texte
  */
@@ -60,3 +61,27 @@ export function debounce<T extends (...args: any[]) => any>(
     timeout = setTimeout(() => func(...args), wait)
   }
 } 
+
+const PASSWORD_REQUIREMENTS = {
+  minLength: 8,
+  hasUpperCase: /[A-Z]/,
+  hasLowerCase: /[a-z]/,
+  hasNumber: /\d/,
+};
+
+export function validatePassword(password: string) {
+  const errors = [];
+  if (password.length < PASSWORD_REQUIREMENTS.minLength) {
+    errors.push("Au moins 8 caractères");
+  }
+  if (!PASSWORD_REQUIREMENTS.hasUpperCase.test(password)) {
+    errors.push("Au moins une majuscule");
+  }
+  if (!PASSWORD_REQUIREMENTS.hasLowerCase.test(password)) {
+    errors.push("Au moins une minuscule");
+  }
+  if (!PASSWORD_REQUIREMENTS.hasNumber.test(password)) {
+    errors.push("Au moins un chiffre");
+  }
+  return { isValid: errors.length === 0, errors };
+}

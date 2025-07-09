@@ -2,6 +2,19 @@
  * Types TypeScript pour l'application CV Genius
  */
 
+// Types pour useAuthForm hook returns
+export type UseAuthFormReturn = {
+  email: string;
+  setEmail: React.Dispatch<React.SetStateAction<string>>;
+  password: string;
+  setPassword: React.Dispatch<React.SetStateAction<string>>;
+  error: string;
+  loading: boolean;
+  handleSubmit: (e: React.FormEvent) => Promise<void>;
+  showToast: boolean;
+  setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
 // Types utilisateur
 export interface User {
   id: string
