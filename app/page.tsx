@@ -1,19 +1,10 @@
 "use client";
-import { Button } from "@/components/ui/Button";
 import useUserStatus from "@/lib/hooks/useUserStatus";
-import { signOut } from "@/lib/supabase/client";
 import { Sparkles, FileText, Zap, Users, Code, Database } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export default function HomePage() {
   const { user, isLoading } = useUserStatus();
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    await signOut();
-    router.push("/");
-  };
 
   const features = [
     {
@@ -70,52 +61,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <FileText className="w-8 h-8 text-primary-600" />
-              <h1 className="text-2xl font-bold text-gray-900">CV Genius</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              {/* 🔧 SUGGESTION: Gestion d'état utilisateur dynamique */}
-              {isLoading ? (
-                <div className="animate-pulse">Chargement...</div>
-              ) : user ? (
-                <div className="flex items-center gap-4">
-                  <Link href="/dashboard" className="btn-secondary">
-                    Mon espace
-                  </Link>
-                  <Button onClick={handleLogout} variant="outline">
-                    Déconnexion
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className="btn-secondary text-sm px-4 py-2 rounded-full"
-                    // 🔧 SUGGESTION: Ajouter data-testid pour les tests E2E
-                    data-testid="login-link"
-                  >
-                    Connexion
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="btn-primary text-sm px-4 py-2 rounded-full"
-                    // 🔧 SUGGESTION: Ajouter data-testid pour les tests E2E
-                    data-testid="register-link"
-                  >
-                    S'inscrire
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50">
 
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
@@ -146,7 +92,7 @@ export default function HomePage() {
             {/* 🔧 SUGGESTION: Conditionner l'affichage selon l'état utilisateur */}
             {user ? (
               <Link
-                href="/cv-builder"
+                href="/dashboard"
                 className="btn-primary text-lg px-8 py-4 rounded-full"
                 data-testid="start-building-cta"
               >
@@ -162,7 +108,7 @@ export default function HomePage() {
               </Link>
             )}
             <Link
-              href="#demo"
+              href="/dashboard"
               className="btn-secondary text-lg px-8 py-4 rounded-full"
               data-testid="demo-link"
             >
@@ -270,50 +216,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <FileText className="w-6 h-6" />
-              <span className="text-lg font-semibold">CV Genius</span>
-            </div>
-
-            <div className="flex space-x-6">
-              <Link
-                href="/about"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                À propos
-              </Link>
-              <Link
-                href="/privacy"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                Confidentialité
-              </Link>
-              <Link
-                href="/terms"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                Conditions
-              </Link>
-              <Link href="/docs" className="text-gray-400 hover:text-white">
-                Documentation
-              </Link>
-              <Link href="/support" className="text-gray-400 hover:text-white">
-                Support
-              </Link>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>
-              &copy; 2024 CV Genius. Projet pédagogique - Tous droits réservés.
-            </p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

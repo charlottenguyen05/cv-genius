@@ -2,12 +2,14 @@
  * Utilitaires génériques pour l'application CV Genius
  */
 
+import { clsx, type ClassValue } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
 /**
  * Fonction utilitaire pour combiner les classes CSS avec Tailwind
- * TODO: Installer clsx et tailwind-merge puis décommenter
  */
-export function cn(...inputs: string[]) {
-  return inputs.filter(Boolean).join(' ')
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
 }
 
 /**
