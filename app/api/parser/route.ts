@@ -1,193 +1,289 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { parseCVText } from '@/lib/utils/parseCVregex'
+import { spawn } from 'child_process'
+import { writeFile, unlink } from 'fs/promises'
+import { join } from 'path'
+import { CVFormData } from '@/types'
 
 export const runtime = 'nodejs'
 
+/**
+ * Nouvelle API de parsing PDF utilisant Python
+ * Remplace complètement l'ancien système
+ */
 export async function POST(request: NextRequest) {
+  console.log('🚀 [PDF Parser API] Nouvelle requête de parsing')
+  
   try {
-    console.log('Parser API - Request received')
-
-    // Récupérer le fichier depuis FormData
+    // 1. Récupération du fichier
     const formData = await request.formData()
     const file = formData.get('file') as File
     
     if (!file) {
+      console.error('❌ Aucun fichier fourni')
       return NextResponse.json(
         { success: false, error: 'Aucun fichier fourni' },
         { status: 400 }
       )
     }
 
-    console.log('Parser API - File received:', {
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    })
-
-    // Valider le type de fichier
-    const allowedTypes = [
-      'application/pdf',
-      'text/plain',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ]
-    
-    if (!allowedTypes.includes(file.type)) {
+    // 2. Validation du type de fichier
+    if (!file.type.includes('pdf')) {
+      console.error('❌ Type de fichier non supporté:', file.type)
       return NextResponse.json(
-        { success: false, error: 'Type de fichier non supporté' },
+        { success: false, error: 'Seuls les fichiers PDF sont supportés' },
         { status: 400 }
       )
     }
 
-    // Valider la taille du fichier (10MB max)
-    const maxFileSize = 10 * 1024 * 1024 // 10MB
-    if (file.size > maxFileSize) {
+    // 3. Validation de la taille (max 10MB)
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSize) {
+      console.error('❌ Fichier trop volumineux:', file.size)
       return NextResponse.json(
         { success: false, error: 'Le fichier ne doit pas dépasser 10MB' },
         { status: 400 }
       )
     }
 
-    // Extraire le contenu textuel du fichier
-    let textContent = ''
+    console.log(`📄 Fichier reçu: ${file.name} (${file.size} bytes)`)
+
+    // 4. Sauvegarde temporaire du fichier
+    const fileBytes = await file.arrayBuffer()
+    const buffer = Buffer.from(fileBytes)
     
-    if (file.type === 'text/plain') {
-      textContent = await file.text()
-      console.log('Parser API - Text file processed')
-    } else if (file.type === 'application/pdf') {
-      console.log('Parser API - Processing PDF')
-      
-      try {
-        // Import dynamique de pdf-parse
-        const pdfParse = await import('pdf-parse').then(module => module.default || module)
-        
-        // Convertir le fichier en buffer
-        const arrayBuffer = await file.arrayBuffer()
-        const buffer = Buffer.from(arrayBuffer)
-        
-        console.log('Parser API - Buffer created, size:', buffer.length)
-        
-        // Parser le PDF avec pdf-parse et options pour éviter les erreurs
-        const pdfData = await pdfParse(buffer, {
-          // Options pour éviter les conflits avec les fichiers de test
-          max: 0, // Pas de limite sur les pages
-        })
-        
-        if (!pdfData || !pdfData.text) {
-          throw new Error('Aucun texte extrait du PDF')
-        }
-        
-        textContent = pdfData.text
-          .replace(/\s+/g, ' ') // Remplacer les espaces multiples par un seul
-          .replace(/\n+/g, '\n') // Remplacer les retours à la ligne multiples
-          .trim()
-        
-        console.log('Parser API - PDF parsed successfully, pages:', pdfData.numpages)
-        console.log('Parser API - Text extracted, length:', textContent.length)
-      } catch (pdfError) {
-        console.error('PDF parsing error:', pdfError)
-        const errorMessage = pdfError instanceof Error ? pdfError.message : String(pdfError)
-        
-        // Gestion spécifique des erreurs connues
-        if (errorMessage.includes('ENOENT') && errorMessage.includes('test/data')) {
-          return NextResponse.json(
-            { success: false, error: 'Erreur de configuration PDF - contactez le support' },
-            { status: 500 }
-          )
-        }
-        
-        if (errorMessage.includes('pdf-parse') || errorMessage.includes('Cannot resolve module')) {
-          return NextResponse.json(
-            { success: false, error: 'Support PDF temporairement indisponible' },
-            { status: 501 }
-          )
-        }
-        
-        return NextResponse.json(
-          { success: false, error: 'Erreur lors de l\'analyse du PDF - vérifiez que le fichier n\'est pas corrompu' },
-          { status: 500 }
-        )
-      }
-    } else {
+    const tempFileName = `temp_cv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.pdf`
+    const tempFilePath = join(process.cwd(), 'tmp', tempFileName)
+    
+    // Création du dossier tmp si nécessaire
+    try {
+      await writeFile(tempFilePath, buffer)
+      console.log(`📁 Fichier temporaire créé: ${tempFilePath}`)
+    } catch (error) {
+      console.error('❌ Erreur lors de la sauvegarde temporaire:', error)
       return NextResponse.json(
-        { success: false, error: 'Type de fichier non supporté pour le moment' },
-        { status: 501 }
+        { success: false, error: 'Erreur lors de la sauvegarde du fichier' },
+        { status: 500 }
       )
     }
 
-    if (!textContent || textContent.length < 50) {
-      return NextResponse.json(
-        { success: false, error: 'Le contenu du fichier est vide ou trop court' },
-        { status: 400 }
-      )
+    // 5. Appel du script Python de parsing
+    console.log('🐍 Lancement du parser Python...')
+    const parsedData = await runPythonParser(tempFilePath)
+
+    // 6. Nettoyage du fichier temporaire
+    try {
+      await unlink(tempFilePath)
+      console.log('🗑️ Fichier temporaire supprimé')
+    } catch (error) {
+      console.warn('⚠️ Impossible de supprimer le fichier temporaire:', error)
     }
 
-    // Utiliser les regex pour extraire les données structurées
-    console.log('Parser API - Parsing with regex')
-    const parsedData = parseCVText(textContent)
+    // 7. Validation et formatage des données
+    const formattedData = formatParsedData(parsedData)
     
-    console.log('Parser API - CV data parsed successfully:', {
-      personalInfo: parsedData.personalInfo,
-      experiencesCount: parsedData.experiences.length,
-      educationCount: parsedData.education.length,
-      skillsCount: parsedData.skills.length,
-      languagesCount: parsedData.languages?.length || 0,
+    console.log('✅ Parsing terminé avec succès')
+    console.log('📊 Données extraites:', {
+      personalInfo: Object.keys(formattedData.personalInfo).length,
+      experiences: formattedData.experiences.length,
+      education: formattedData.education.length,
+      skills: formattedData.skills.length,
+      languages: formattedData.languages?.length || 0
     })
-
-    // Optionnel : Améliorer avec Gemini si la clé API est disponible
-    let improvedData = parsedData
-    let source = 'regex-only'
-    
-    if (process.env.GEMINI_API_KEY) {
-      try {
-        console.log('Parser API - Enhancing with Gemini AI')
-        const { GeminiService } = await import('@/lib/gemini/service')
-        const geminiService = new GeminiService()
-        
-        // Améliorer seulement quelques descriptions pour éviter les timeouts
-        const maxToImprove = 2
-        let improved = 0
-        
-        for (let i = 0; i < improvedData.experiences.length && improved < maxToImprove; i++) {
-          const exp = improvedData.experiences[i]
-          if (exp.description && exp.description.length > 10) {
-            try {
-              const enhanced = await geminiService.improveCVContent(exp.description, 'experience')
-              if (enhanced && enhanced.length > exp.description.length * 0.8) {
-                improvedData.experiences[i].description = enhanced
-                improved++
-              }
-            } catch (error) {
-              console.log('Skipping Gemini enhancement for experience', i, error)
-            }
-          }
-        }
-        
-        if (improved > 0) {
-          source = 'regex+gemini'
-          console.log('Parser API - Content enhanced with Gemini')
-        }
-      } catch (geminiError) {
-        console.log('Parser API - Gemini enhancement failed, using regex data:', geminiError)
-        // Continue avec les données regex si Gemini échoue
-      }
-    }
 
     return NextResponse.json({
       success: true,
-      parsedData: improvedData,
-      source,
-      textLength: textContent.length
+      parsedData: formattedData,
+      textLength: JSON.stringify(parsedData).length,
+      source: 'cv-genius-python-parser',
+      timestamp: new Date().toISOString()
     })
 
   } catch (error) {
-    console.error('Parser API Error:', error)
+    console.error('❌ Erreur lors du parsing:', error)
     return NextResponse.json(
       { 
         success: false, 
-        error: error instanceof Error ? error.message : 'Erreur interne du serveur' 
+        error: 'Erreur interne lors du parsing du CV',
+        details: error instanceof Error ? error.message : 'Erreur inconnue'
       },
       { status: 500 }
     )
   }
+}
+
+/**
+ * Exécute le script Python de parsing
+ */
+async function runPythonParser(filePath: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const pythonScript = join(process.cwd(), 'scripts', 'pdf_parser.py')
+    
+    // Utiliser le parser amélioré
+    const improvedScript = join(process.cwd(), 'scripts', 'pdf_parser_improved.py')
+    const venvPython = join(process.cwd(), 'venv', 'bin', 'python')
+    
+    console.log(`🐍 Exécution: ${venvPython} ${improvedScript} ${filePath}`)
+    
+    const pythonProcess = spawn(venvPython, [improvedScript, filePath], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      cwd: process.cwd(),
+      env: { ...process.env, PYTHONPATH: join(process.cwd(), 'venv', 'lib', 'python3.12', 'site-packages') }
+    })
+    
+    let stdout = ''
+    let stderr = ''
+    
+    // Collecte des données de sortie
+    pythonProcess.stdout.on('data', (data) => {
+      stdout += data.toString()
+    })
+    
+    pythonProcess.stderr.on('data', (data) => {
+      stderr += data.toString()
+    })
+    
+    // Gestion de la fin du processus
+    pythonProcess.on('close', (code) => {
+      if (code === 0) {
+        try {
+          // Parse la sortie JSON du script Python
+          const result = JSON.parse(stdout)
+          console.log('✅ Script Python terminé avec succès')
+          resolve(result)
+        } catch (parseError) {
+          console.error('❌ Erreur lors du parsing JSON:', parseError)
+          console.error('📤 Sortie brute du script:', stdout)
+          reject(new Error(`Erreur de parsing JSON: ${parseError}`))
+        }
+      } else {
+        console.error(`❌ Script Python terminé avec le code ${code}`)
+        console.error('📤 Erreur stderr:', stderr)
+        reject(new Error(`Script Python échoué (code ${code}): ${stderr}`))
+      }
+    })
+    
+    // Gestion des erreurs du processus
+    pythonProcess.on('error', (error) => {
+      console.error('❌ Erreur lors du lancement du script Python (venv):', error)
+      console.log('🔄 Tentative avec python3 système...')
+      
+      // Fallback avec python3 système
+      try {
+        const fallbackProcess = spawn('python3', [improvedScript, filePath], {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          cwd: process.cwd()
+        })
+        
+        let fallbackStdout = ''
+        let fallbackStderr = ''
+        
+        fallbackProcess.stdout.on('data', (data) => {
+          fallbackStdout += data.toString()
+        })
+        
+        fallbackProcess.stderr.on('data', (data) => {
+          fallbackStderr += data.toString()
+        })
+        
+        fallbackProcess.on('close', (code) => {
+          if (code === 0) {
+            try {
+              const result = JSON.parse(fallbackStdout)
+              console.log('✅ Fallback Python3 réussi')
+              resolve(result)
+            } catch (parseError) {
+              reject(new Error(`Erreur de parsing JSON (fallback): ${parseError}`))
+            }
+          } else {
+            reject(new Error(`Échec complet Python (code ${code}): ${fallbackStderr}`))
+          }
+        })
+        
+        fallbackProcess.on('error', (fallbackError) => {
+          reject(new Error(`Python indisponible (venv: ${error.message}, système: ${fallbackError.message})`))
+        })
+      } catch (fallbackError) {
+        reject(new Error(`Impossible de lancer Python: ${error.message}`))
+      }
+    })
+    
+    // Timeout de sécurité (30 secondes)
+    setTimeout(() => {
+      pythonProcess.kill()
+      reject(new Error('Timeout: Le parsing a pris trop de temps'))
+    }, 30000)
+  })
+}
+
+/**
+ * Formate les données parsées pour correspondre à l'interface CVFormData
+ */
+function formatParsedData(rawData: any): CVFormData {
+  console.log('🔧 Formatage des données parsées...')
+  
+  // Assure que toutes les propriétés existent et sont du bon type
+  const formatted: CVFormData = {
+    personalInfo: {
+      name: rawData.personalInfo?.name || '',
+      email: rawData.personalInfo?.email || '',
+      phone: rawData.personalInfo?.phone || '',
+      location: rawData.personalInfo?.location || '',
+      linkedin: rawData.personalInfo?.linkedin || '',
+      website: rawData.personalInfo?.website || ''
+    },
+    experiences: (rawData.experiences || []).map((exp: any, index: number) => ({
+      id: exp.id || `exp-${Date.now()}-${index}`,
+      company: exp.company || '',
+      position: exp.position || '',
+      location: exp.location || '',
+      startDate: exp.startDate || '',
+      endDate: exp.endDate || '',
+      description: exp.description || '',
+      isCurrentPosition: exp.isCurrentPosition || false
+    })),
+    education: (rawData.education || []).map((edu: any, index: number) => ({
+      id: edu.id || `edu-${Date.now()}-${index}`,
+      institution: edu.institution || '',
+      degree: edu.degree || '',
+      field: edu.field || '',
+      startDate: edu.startDate || '',
+      endDate: edu.endDate || '',
+      description: edu.description || ''
+    })),
+    skills: (rawData.skills || []).map((skill: any, index: number) => ({
+      id: skill.id || `skill-${Date.now()}-${index}`,
+      name: skill.name || '',
+      category: skill.category || 'other',
+      level: skill.level || 'intermediate'
+    })),
+    languages: (rawData.languages || []).map((lang: any, index: number) => ({
+      id: lang.id || `lang-${Date.now()}-${index}`,
+      name: lang.name || '',
+      level: lang.level || 'B1'
+    }))
+  }
+  
+  console.log('✅ Données formatées avec succès')
+  return formatted
+}
+
+/**
+ * Endpoint de test pour vérifier le bon fonctionnement
+ */
+export async function GET() {
+  return NextResponse.json({
+    message: 'CV Genius PDF Parser API',
+    version: '2.0.0',
+    status: 'active',
+    supportedFormats: ['application/pdf'],
+    maxFileSize: '10MB',
+    features: [
+      'Extraction d\'informations personnelles',
+      'Analyse des expériences professionnelles', 
+      'Extraction de la formation',
+      'Détection des compétences techniques',
+      'Reconnaissance des langues'
+    ],
+    timestamp: new Date().toISOString()
+  })
 } 

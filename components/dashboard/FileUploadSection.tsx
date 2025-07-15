@@ -1,8 +1,8 @@
 import React from 'react'
-import { Upload, FileText } from 'lucide-react'
+import { Upload, FileText, Loader2, CheckCircle, User, Mail, Phone, Briefcase, GraduationCap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import DeleteButton from '@/components/dashboard/forms/DeleteButton'
-import { useFileUpload } from '@/lib/hooks/useFileUpload'
+import { CVFormData } from '@/types'
 
 interface FileUploadSectionProps {
   uploadedFile: File | null
@@ -12,6 +12,8 @@ interface FileUploadSectionProps {
   handleDrop: (e: React.DragEvent) => void
   handleFileInput: (e: React.ChangeEvent<HTMLInputElement>) => void
   removeFile: () => void
+  isUploading?: boolean
+  parsedData?: CVFormData | null
 }
 
 const FileUploadSection: React.FC<FileUploadSectionProps> = ({
@@ -21,10 +23,12 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
   setIsDragOver,
   handleDrop,
   handleFileInput,
-  removeFile
+  removeFile,
+  isUploading = false,
+  parsedData = null
 }) => {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <h2 className="text-xl font-semibold text-gray-900">1. Télécharger votre CV</h2>
       
       <div
@@ -58,6 +62,22 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                 className="hover:bg-red-100"
               />
             </div>
+            
+            {/* État de chargement */}
+            {isUploading && (
+              <div className="flex items-center justify-center space-x-2 text-blue-600">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-sm font-medium">Analyse du CV en cours...</span>
+              </div>
+            )}
+            
+            {/* Succès du parsing */}
+            {!isUploading && parsedData && (
+              <div className="flex items-center justify-center space-x-2 text-green-600">
+                <CheckCircle className="h-5 w-5" />
+                <span className="text-sm font-medium">CV analysé avec succès!</span>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
@@ -67,21 +87,97 @@ const FileUploadSection: React.FC<FileUploadSectionProps> = ({
                 Glissez votre CV ici ou cliquez pour sélectionner
               </p>
               <p className="text-sm text-gray-500">
-                PDF, TXT ou DOC jusqu'à 10MB
+                PDF ou TXT jusqu'à 10MB
               </p>
             </div>
             <input
               type="file"
-              accept=".pdf,.txt,.doc,.docx"
+              accept=".pdf,.txt"
               onChange={handleFileInput}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              disabled={isUploading}
             />
           </div>
         )}
       </div>
       
+      {/* Affichage des erreurs */}
       {errors.file && (
-        <p className="text-sm text-red-600">{errors.file}</p>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-600 font-medium">❌ {errors.file}</p>
+        </div>
+      )}
+      
+      {/* Affichage des données extraites */}
+      {!isUploading && parsedData && !errors.file && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+          <div className="flex items-center space-x-2 mb-4">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <h3 className="text-lg font-semibold text-green-800">Informations extraites</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            {/* Informations personnelles */}
+            <div className="space-y-2">
+              <h4 className="font-medium text-green-700 flex items-center">
+                <User className="h-4 w-4 mr-1" />
+                Informations personnelles
+              </h4>
+              <div className="pl-5 space-y-1 text-green-600">
+                {parsedData.personalInfo?.name && (
+                  <p>👤 {parsedData.personalInfo.name}</p>
+                )}
+                {parsedData.personalInfo?.email && (
+                  <p className="flex items-center">
+                    <Mail className="h-3 w-3 mr-1" />
+                    {parsedData.personalInfo.email}
+                  </p>
+                )}
+                {parsedData.personalInfo?.phone && (
+                  <p className="flex items-center">
+                    <Phone className="h-3 w-3 mr-1" />
+                    {parsedData.personalInfo.phone}
+                  </p>
+                )}
+                {parsedData.personalInfo?.linkedin && (
+                  <p>🔗 LinkedIn</p>
+                )}
+                {parsedData.personalInfo?.website && (
+                  <p>🌐 Site web</p>
+                )}
+              </div>
+            </div>
+            
+            {/* Résumé des sections */}
+            <div className="space-y-2">
+              <h4 className="font-medium text-green-700">Sections détectées</h4>
+              <div className="pl-0 space-y-1 text-green-600">
+                {(parsedData.experiences?.length || 0) > 0 && (
+                  <p className="flex items-center">
+                    <Briefcase className="h-3 w-3 mr-1" />
+                    {parsedData.experiences?.length} expérience(s)
+                  </p>
+                )}
+                {(parsedData.education?.length || 0) > 0 && (
+                  <p className="flex items-center">
+                    <GraduationCap className="h-3 w-3 mr-1" />
+                    {parsedData.education?.length} formation(s)
+                  </p>
+                )}
+                {(parsedData.skills?.length || 0) > 0 && (
+                  <p>🛠️ {parsedData.skills?.length} compétence(s)</p>
+                )}
+                {(parsedData.languages?.length || 0) > 0 && (
+                  <p>🗣️ {parsedData.languages?.length} langue(s)</p>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 p-3 bg-green-100 rounded text-sm text-green-700">
+            💡 <strong>Conseil :</strong> Vérifiez et corrigez les informations ci-dessous avant de générer votre CV.
+          </div>
+        </div>
       )}
     </div>
   )

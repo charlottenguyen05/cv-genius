@@ -26,7 +26,7 @@ const useUserStatus = () => {
     checkUserStatus();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => setUser(session?.user || null)
+      (_event: any, session: any) => setUser(session?.user || null)
     );
 
     return () => {

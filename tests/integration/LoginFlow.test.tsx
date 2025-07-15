@@ -60,7 +60,7 @@ describe("Login Flow Integration Test", () => {
             data: {
               user: {
                 id: "123",
-                email: "test@example.com",
+                email: "nguyen.nhi@example.com",
                 app_metadata: {},
                 user_metadata: {},
                 aud: "authenticated",
@@ -99,14 +99,14 @@ describe("Login Flow Integration Test", () => {
 
     // ÉTAPE 2: SIMULATION DE LA SAISIE UTILISATEUR
     // On saisit l'email : ceci teste l'intégration entre l'input et le state du hook
-    await user.type(screen.getByTestId("email-input"), "test@example.com");
+    await user.type(screen.getByTestId("email-input"), "nguyen.nhi@example.com");
 
     // On saisit le mot de passe : ceci teste la gestion d'état pour un second champ
     await user.type(screen.getByTestId("password-input"), "motdepasse123");
 
     // VÉRIFICATION DES VALEURS : On vérifie que les valeurs sont bien mises à jour
     // Ceci confirme que l'intégration entre inputs et hooks fonctionne
-    expect(screen.getByTestId("email-input")).toHaveValue("test@example.com");
+    expect(screen.getByTestId("email-input")).toHaveValue("nguyen.nhi@example.com");
     expect(screen.getByTestId("password-input")).toHaveValue("motdepasse123");
 
     // ÉTAPE 3: SIMULATION DE LA SOUMISSION
@@ -126,7 +126,7 @@ describe("Login Flow Integration Test", () => {
     // Ceci teste l'intégration entre useAuthForm et le client Supabase
     expect(mockSignIn).toHaveBeenCalledTimes(1);
     expect(mockSignIn).toHaveBeenCalledWith(
-      "test@example.com",
+      "nguyen.nhi@example.com",
       "motdepasse123"
     );
 
@@ -181,13 +181,13 @@ describe("Login Flow Integration Test", () => {
     render(<LoginPage />);
 
     // SIMULATION DU FLUX AVEC ERREUR
-    await user.type(screen.getByTestId("email-input"), "wrong@example.com");
+    await user.type(screen.getByTestId("email-input"), "nguyen.wrong@example.com");
     await user.type(screen.getByTestId("password-input"), "wrongpassword");
     await user.click(screen.getByTestId("submit-button"));
 
     // VÉRIFICATION DE L'APPEL API (même en cas d'erreur)
     expect(mockSignIn).toHaveBeenCalledWith(
-      "wrong@example.com",
+      "nguyen.wrong@example.com",
       "wrongpassword"
     );
 

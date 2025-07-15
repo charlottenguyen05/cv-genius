@@ -199,14 +199,22 @@ export const useCVForm = () => {
   }
 
   const handleSubmit = async (uploadedFile: File | null, setFileError: (error: string) => void) => {
-    if (!uploadedFile) {
-      setFileError('Veuillez sélectionner un fichier')
-      return
-    }
-
     // Clear previous errors
     setError('')
     setShowToast(false)
+
+    // Validation des données minimum requises
+    if (!formData.personalInfo.name) {
+      setError('Le nom est requis pour générer le CV')
+      setShowToast(true)
+      return
+    }
+
+    if (!formData.personalInfo.email) {
+      setError('L\'email est requis pour générer le CV')
+      setShowToast(true)
+      return
+    }
 
     // Check if user is authenticated
     try {
@@ -232,20 +240,57 @@ export const useCVForm = () => {
     setIsSubmitting(true)
     
     try {
-      // TODO: Implement file upload and CV enhancement with Gemini API
-      console.log('File:', uploadedFile)
-      console.log('CV Data:', formData)
+      console.log('🚀 Lancement de la génération CV...')
+      console.log('📊 Données CV:', formData)
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // TODO: Replace with actual success handling (no toast for success as requested)
-      console.log('CV amélioration réussie!')
+      // Appel de l'API de génération CV complète
+      const response = await fetch('/api/cv/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cvData: formData })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Erreur HTTP: ${response.status}`)
+      }
+
+      // Vérifier si la réponse est un PDF
+      const contentType = response.headers.get('content-type')
+      if (contentType === 'application/pdf') {
+        // Téléchargement automatique du PDF
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        
+        // Récupérer le nom du fichier depuis les headers
+        const contentDisposition = response.headers.get('content-disposition')
+        const fileName = contentDisposition 
+          ? contentDisposition.split('filename="')[1]?.split('"')[0] 
+          : `CV_${formData.personalInfo.name?.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
+        
+        link.download = fileName
+        document.body.appendChild(link)
+        link.click()
+        
+        // Nettoyage
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(link)
+        
+        console.log('✅ CV généré et téléchargé avec succès!')
+        
+        // Pas de toast de succès comme demandé - juste le téléchargement
+      } else {
+        throw new Error('Format de réponse inattendu')
+      }
       
     } catch (error) {
-      console.error('Error enhancing CV:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue lors de l\'amélioration du CV'
-      setError(`Erreur lors de l'amélioration du CV: ${errorMessage}`)
+      console.error('❌ Erreur lors de la génération du CV:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue lors de la génération du CV'
+      setError(`Erreur lors de la génération du CV: ${errorMessage}`)
       setShowToast(true)
     } finally {
       setIsSubmitting(false)

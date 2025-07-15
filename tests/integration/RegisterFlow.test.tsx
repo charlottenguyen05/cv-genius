@@ -23,7 +23,7 @@ describe("Register flow integration test", () => {
             data: {
               user: {
                 id: "123",
-                email: "test@example.com",
+                email: "nguyen.nhi@example.com",
                 app_metadata: {},
                 user_metadata: {},
                 aud: "authenticated",
@@ -56,12 +56,12 @@ describe("Register flow integration test", () => {
     expect(button).toBeEnabled();
 
     // ACT: SIMULATE USER TYPING
-    await user.type(screen.getByTestId("email-input"), "test@example.com");
+    await user.type(screen.getByTestId("email-input"), "nguyen.nhi@example.com");
     await user.type(screen.getByTestId("password-input"), "Motdepasse123");
     await user.type(screen.getByTestId("cfpassword-input"), "Motdepasse123");
 
     // ASSERT: TEST VALUES HOLDS BY INPUT
-    expect(screen.getByTestId("email-input")).toHaveValue("test@example.com");
+    expect(screen.getByTestId("email-input")).toHaveValue("nguyen.nhi@example.com");
     expect(screen.getByTestId("password-input")).toHaveValue("Motdepasse123");
     expect(screen.getByTestId("cfpassword-input")).toHaveValue("Motdepasse123");
     screen.getAllByRole("listitem").forEach((li) => {
@@ -95,7 +95,7 @@ describe("Register flow integration test", () => {
     // Test bonus
     expect(mockSignUp).toHaveBeenCalledTimes(1);
     expect(mockSignUp).toHaveBeenCalledWith(
-      "test@example.com",
+      "nguyen.nhi@example.com",
       "Motdepasse123"
     );
   });
@@ -106,7 +106,7 @@ describe("Register flow integration test", () => {
 
     // SIMULATION DU FLUX AVEC ERREUR
     const button = screen.getByRole("button");
-    await user.type(screen.getByTestId("email-input"), "wrong@example.com");
+    await user.type(screen.getByTestId("email-input"), "nguyen.wrong@example.com");
     await user.type(screen.getByTestId("password-input"), "wrongpassword");
     await user.type(screen.getByTestId("cfpassword-input"), "wrongpassword");
     await user.click(button);
@@ -151,7 +151,7 @@ describe("Register flow integration test", () => {
     await user.click(button);
     expect(mockSignUp).not.toHaveBeenCalled();
 
-    await user.type(screen.getByTestId("email-input"), "wrong@example.com");
+    await user.type(screen.getByTestId("email-input"), "nguyen.wrong@example.com");
     await user.click(button);
     expect(mockSignUp).not.toHaveBeenCalled();
 
