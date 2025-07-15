@@ -107,7 +107,7 @@ export const useCVForm = () => {
     })
   }
 
-  // Skills handlers
+  // Skill handlers
   const addSkill = () => {
     const newSkill: Partial<Skill> = {
       id: Date.now().toString(),
@@ -172,7 +172,32 @@ export const useCVForm = () => {
     })
   }
 
-  // Form submission
+  // Load parsed data from the parser API
+  const loadParsedData = (parsedData: CVFormData) => {
+    console.log('Loading parsed data into form:', parsedData)
+    
+    // Merge personal info, keeping existing data if parser data is empty
+    const mergedPersonalInfo = {
+      name: parsedData.personalInfo.name || formData.personalInfo.name,
+      email: parsedData.personalInfo.email || formData.personalInfo.email,
+      phone: parsedData.personalInfo.phone || formData.personalInfo.phone,
+      location: parsedData.personalInfo.location || formData.personalInfo.location,
+      linkedin: parsedData.personalInfo.linkedin || formData.personalInfo.linkedin,
+      website: parsedData.personalInfo.website || formData.personalInfo.website
+    }
+
+    // Use parsed data for experiences, education, skills, languages if available
+    setFormData({
+      personalInfo: mergedPersonalInfo,
+      experiences: parsedData.experiences.length > 0 ? parsedData.experiences : formData.experiences,
+      education: parsedData.education.length > 0 ? parsedData.education : formData.education,
+      skills: parsedData.skills.length > 0 ? parsedData.skills : formData.skills,
+      languages: parsedData.languages && parsedData.languages.length > 0 ? parsedData.languages : formData.languages
+    })
+
+    console.log('Form data updated with parsed data')
+  }
+
   const handleSubmit = async (uploadedFile: File | null, setFileError: (error: string) => void) => {
     if (!uploadedFile) {
       setFileError('Veuillez sélectionner un fichier')
@@ -185,8 +210,8 @@ export const useCVForm = () => {
 
     // Check if user is authenticated
     try {
-      const {user, error: authError} = await getCurrentUser()
-      
+      const { user, error: authError } = await getCurrentUser()
+
       if (!user) {
         setShowCard(true)
         return
@@ -197,7 +222,6 @@ export const useCVForm = () => {
         setShowToast(true)
         return
       }
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur de connexion inattendue'
       setError(`Erreur lors de la vérification de l'authentification: ${errorMessage}`)
@@ -244,6 +268,7 @@ export const useCVForm = () => {
     addLanguage,
     updateLanguage,
     removeLanguage,
+    loadParsedData,
     handleSubmit,
     showToast,
     setShowToast,

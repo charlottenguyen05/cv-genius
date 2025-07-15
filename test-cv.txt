@@ -1,0 +1,30 @@
+Jean Dupont
+jean.dupont@email.com
++33 6 12 34 56 78
+Paris, France
+
+EXPÉRIENCE PROFESSIONNELLE
+
+2020-2023 : Développeur Full Stack chez TechCorp
+- Développement d'applications web avec React et Node.js
+- Gestion de bases de données PostgreSQL
+
+2018-2020 : Développeur Junior chez StartupXYZ  
+- Création d'APIs REST
+- Maintenance de code existant
+
+FORMATION
+
+2018 : Master en Informatique, Université Paris-Sorbonne
+Spécialisation développement web
+
+2016 : Licence Informatique, Université Paris-Sorbonne
+
+COMPÉTENCES
+
+JavaScript, React, Node.js, PostgreSQL, Git, Docker
+
+LANGUES
+
+Français (natif)
+Anglais (B2)

@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { CVFormData } from '@/types'
+
+export const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
 export interface FileUploadState {
   uploadedFile: File | null
@@ -6,14 +9,15 @@ export interface FileUploadState {
   errors: Record<string, string>
 }
 
-export const useFileUpload = () => {
+export const useFileUpload = (onDataParsed?: (data: CVFormData) => void) => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [parsedData, setParsedData] = useState<CVFormData | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   // File validation
   const validateFile = (file: File): string | null => {
-    const maxSize = 10 * 1024 * 1024 // 10MB
     const allowedTypes = [
       'application/pdf',
       'text/plain',
@@ -21,7 +25,7 @@ export const useFileUpload = () => {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ]
     
-    if (file.size > maxSize) {
+    if (file.size > MAX_FILE_SIZE) {
       return 'Le fichier ne doit pas dépasser 10MB'
     }
     
@@ -32,7 +36,49 @@ export const useFileUpload = () => {
     return null
   }
 
-  const handleFileSelect = (file: File) => {
+  // Parse file with API
+  const parseFile = async (file: File): Promise<boolean> => {
+    setIsUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const response = await fetch('/api/parser', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      const result = await response.json()
+      
+      if (!response.ok) {
+        setErrors({ file: result.error || 'Erreur lors du parsing du fichier' })
+        return false
+      }
+      
+      if (result.success && result.parsedData) {
+        setParsedData(result.parsedData)
+        console.log('Parsing successful, source:', result.source)
+        
+        // Auto-fill form if callback provided
+        if (onDataParsed) {
+          onDataParsed(result.parsedData)
+        }
+        
+        return true
+      } else {
+        setErrors({ file: 'Erreur lors de l\'extraction des données' })
+        return false
+      }
+    } catch (error) {
+      console.error('Parse error:', error)
+      setErrors({ file: 'Erreur de connexion au serveur' })
+      return false
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleFileSelect = async (file: File) => {
     const error = validateFile(file)
     if (error) {
       setErrors({ file: error })
@@ -41,6 +87,9 @@ export const useFileUpload = () => {
     
     setUploadedFile(file)
     setErrors({ ...errors, file: '' })
+    
+    // Auto-parse le fichier après sélection
+    await parseFile(file)
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -62,6 +111,7 @@ export const useFileUpload = () => {
 
   const removeFile = () => {
     setUploadedFile(null)
+    setParsedData(null)
     setErrors({ ...errors, file: '' })
   }
 
@@ -73,10 +123,14 @@ export const useFileUpload = () => {
     uploadedFile,
     isDragOver,
     errors,
+    parsedData,
+    isUploading,
+    setParsedData,
     setIsDragOver,
     handleDrop,
     handleFileInput,
     removeFile,
-    setFileError
+    setFileError,
+    parseFile
   }
 } 
