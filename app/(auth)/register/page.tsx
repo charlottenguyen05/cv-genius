@@ -104,7 +104,11 @@ export default function RegisterPage() {
           </div>
         </div>
         {error && (
-          <div className="mb-4 text-red-800" role="alert" data-testid="password-alert">
+          <div
+            className="mb-4 text-red-800"
+            role="alert"
+            data-testid="password-alert"
+          >
             {error}
           </div>
         )}
@@ -130,7 +134,7 @@ export default function RegisterPage() {
           {confirmPassword && password !== confirmPassword && (
             <div
               className="text-red-500 text-xs mt-1"
-              data-testid="password-not-equivalent"
+              data-testid="password-not-equivalent-alert"
             >
               Les mots de passe ne correspondent pas
             </div>
@@ -141,6 +145,7 @@ export default function RegisterPage() {
           type="submit"
           className="w-full bg-blue-600 text-white py-2 rounded-full font-semibold hover:bg-blue-700 transition disabled:opacity-50"
           disabled={loading || password !== confirmPassword}
+          data-testid="submit-button"
         >
           {loading ? "Création..." : "Créer mon compte"}
         </button>
@@ -157,6 +162,7 @@ export default function RegisterPage() {
       </form>
       {showToast && (
         <Toast
+          data-testid="successful-register-toast"
           message="Compte créé avec succès ! Veuillez-vous confirmer votre email. Vous
           pouvez désormais vous connecter."
           onClose={() => router.push("/login")}

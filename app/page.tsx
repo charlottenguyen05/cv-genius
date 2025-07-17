@@ -4,7 +4,7 @@ import { Sparkles, FileText, Zap, Users, Code, Database } from "lucide-react";
 import Link from "next/link";
 
 export default function HomePage() {
-  const { user, isLoading } = useUserStatus();
+  const { user } = useUserStatus();
 
   const features = [
     {
@@ -61,7 +61,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50" data-testid="homepage">
 
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">

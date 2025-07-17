@@ -8,14 +8,14 @@ import { act } from "react";
 // jest.mock() remplace la vraie fonction validatePassword par une version mock
 // Cela nous permet de contrôler son comportement et de tester uniquement notre hook
 jest.mock("@/lib/utils", () => ({
-  // On mock SEULEMENT validatePassword, pas tout le module
   validatePassword: jest.fn(),
 }));
 
-jest.mock("@/lib/supabase/client", () => ({
-  signIn: jest.fn(),
+jest.mock('@/lib/supabase/client', () => ({
   signUp: jest.fn(),
+  signIn: jest.fn()
 }));
+
 
 describe("useAuthForm", () => {
   beforeEach(() => {

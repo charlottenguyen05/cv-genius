@@ -5,7 +5,7 @@ import { User } from "@supabase/supabase-js";
 
 const useUserStatus = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string | null>("");
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -14,8 +14,13 @@ const useUserStatus = () => {
       if (!componentIsUnmounted) {
         try {
           let { user: userData, error } = await getCurrentUser();
-          setUser(userData);
-          setError(error?.message || "Cannot get user info");
+          if (userData) {
+            setUser(userData);
+            setError("");
+          } else {
+            setUser(null);
+            setError(error?.message || "Cannot get user info");
+          }
         } catch (error: any) {
           setError("Check your internet connection, something went wrong");
         } finally {

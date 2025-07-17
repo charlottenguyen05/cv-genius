@@ -3,6 +3,7 @@ import Link from "next/link";
 import Toast from "@/components/ui/Toast";
 import useAuthForm from "@/lib/hooks/useAuthForm";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -66,14 +67,14 @@ export default function LoginPage() {
             {error}
           </div>
         )}
-        <button
+        <Button
           type="submit"
           className="w-full bg-blue-600 text-white py-2 rounded-full font-semibold hover:bg-blue-700 transition disabled:opacity-50"
           disabled={loading}
           data-testid="submit-button"
         >
           {loading ? "Connexion..." : "Se connecter"}
-        </button>
+        </Button>
         <div className="mt-4 text-center">
           <Link
             href="/auth/forgot-password"
@@ -85,6 +86,7 @@ export default function LoginPage() {
       </form>
       {showToast && (
         <Toast
+          data-testid="successful-login-toast"
           message="Connexion réussie. Redirection vers votre espace."
           onClose={() => router.push("/dashboard")}
         />

@@ -8,10 +8,6 @@ jest.mock("@/lib/supabase/client", () => ({
   signUp: jest.fn(),
 }));
 
-// jest.mock("@/lib/utils", () => ({
-//   validatePassword: jest.fn(),
-// }));
-
 describe("Register flow integration test", () => {
   const mockSignUp = signUp as jest.MockedFunction<typeof signUp>;
 
@@ -125,8 +121,6 @@ describe("Register flow integration test", () => {
       "text-green-600"
     );
 
-    // VÉRIFICATION QUE LE TOAST N'APPARAÎT PAS EN CAS D'ERREUR
-    // Ceci teste que l'intégration gère bien les différents scénarios
     expect(
       screen.queryByText("Connexion réussie. Redirection vers votre espace.")
     ).not.toBeInTheDocument();
@@ -138,7 +132,7 @@ describe("Register flow integration test", () => {
     await user.type(screen.getByTestId("password-input"), "Nic123fs");
     await user.type(screen.getByTestId("cfpassword-input"), "134s5df");
     await user.click(button);
-    expect(screen.getByTestId("password-not-equivalent")).toBeInTheDocument();
+    expect(screen.getByTestId("password-not-equivalent-alert")).toBeInTheDocument();
     expect(mockSignUp).not.toHaveBeenCalled();
     expect(button).toBeDisabled();
   });

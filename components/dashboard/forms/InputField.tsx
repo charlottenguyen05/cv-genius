@@ -9,6 +9,7 @@ interface InputFieldProps {
   placeholder?: string;
   required?: boolean;
   className?: string;
+  "data-testid"?: string;
 }
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -20,6 +21,7 @@ const InputField: React.FC<InputFieldProps> = ({
   placeholder,
   required = false,
   className = "",
+  'data-testid': testId
 }) => {
   return (
     <div className={className}>
@@ -39,6 +41,7 @@ const InputField: React.FC<InputFieldProps> = ({
         className="w-full px-3 py-2 border text-gray-900 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         placeholder={placeholder}
         required={required}
+        data-testid={testId}
       />
     </div>
   );

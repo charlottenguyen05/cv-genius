@@ -9,6 +9,7 @@ interface TextAreaFieldProps {
   required?: boolean;
   rows?: number;
   className?: string;
+  "data-testid"?: string;
 }
 
 const TextAreaField: React.FC<TextAreaFieldProps> = ({
@@ -20,6 +21,7 @@ const TextAreaField: React.FC<TextAreaFieldProps> = ({
   required = false,
   rows = 3,
   className = "",
+  "data-testid": testid,
 }) => {
   return (
     <div className={className}>
@@ -32,6 +34,7 @@ const TextAreaField: React.FC<TextAreaFieldProps> = ({
       </label>
       <textarea
         id={name}
+        data-testid={testid}
         name={name}
         value={value}
         onChange={(e) => onChange(e.target.value)}

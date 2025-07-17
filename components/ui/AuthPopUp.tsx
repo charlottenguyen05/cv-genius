@@ -24,16 +24,17 @@ const AuthPopUp: React.FC<AuthPopUpProps> = ({ isOpen, onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="auth-popup">
       <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4 relative">
         {/* Close button */}
-        <button
+        <Button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
           aria-label="Fermer"
+          data-testid="close-button"
         >
           <X className="h-6 w-6" />
-        </button>
+        </Button>
 
         {/* Content */}
         <div className="text-center">
@@ -50,6 +51,7 @@ const AuthPopUp: React.FC<AuthPopUpProps> = ({ isOpen, onClose }) => {
               onClick={handleSignIn}
               className="w-full"
               size="lg"
+              data-testid="signin-button"
             >
               Se connecter
             </Button>
@@ -59,6 +61,7 @@ const AuthPopUp: React.FC<AuthPopUpProps> = ({ isOpen, onClose }) => {
               variant="outline"
               className="w-full"
               size="lg"
+              data-testid="register-button"
             >
               Créer un compte
             </Button>

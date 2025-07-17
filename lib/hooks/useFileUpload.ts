@@ -150,15 +150,6 @@ export const useFileUpload = (onDataParsed?: (data: CVFormData) => void) => {
     setErrors({ ...errors, file: error })
   }
 
-  // Re-parser un fichier existant
-  const reParseFile = async () => {
-    if (uploadedFile) {
-      console.log('🔄 Re-parsing du fichier:', uploadedFile.name)
-      return await parseFile(uploadedFile)
-    }
-    return false
-  }
-
   return {
     // État
     uploadedFile,
@@ -177,6 +168,6 @@ export const useFileUpload = (onDataParsed?: (data: CVFormData) => void) => {
     handleFileInput,
     removeFile,
     parseFile,
-    reParseFile
+    handleFileSelect
   }
 } 

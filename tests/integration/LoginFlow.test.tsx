@@ -18,24 +18,20 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 // On importe le composant qu'on va tester (pas isolé, mais dans son contexte)
 import LoginPage from "@/app/(auth)/login/page";
+import { signIn } from "@/lib/supabase/client";
 
-// MOCK DE SUPABASE : On mock le module entier car on ne veut pas faire de vrais appels API
-// Mais on teste quand même l'intégration avec ce module
+const mockRouterPush = jest.fn();
+
 jest.mock("@/lib/supabase/client", () => ({
-  // On mock la fonction signIn qui sera appelée par useAuthForm
   signIn: jest.fn(),
+  signOut: jest.fn(),
 }));
 
-// // MOCK DU ROUTER : Next.js utilise useRouter, on doit le mocker pour les tests
-// jest.mock('next/navigation', () => ({
-//   useRouter: () => ({
-//     // On mock la fonction push qui sera utilisée pour la redirection
-//     push: jest.fn(),
-//   }),
-// }))
-
-// On importe le module mocké pour pouvoir contrôler son comportement dans les tests
-import { signIn } from "@/lib/supabase/client";
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: mockRouterPush,
+  }),
+}));
 
 describe("Login Flow Integration Test", () => {
   // On type le mock pour avoir l'autocomplétion TypeScript
@@ -99,14 +95,19 @@ describe("Login Flow Integration Test", () => {
 
     // ÉTAPE 2: SIMULATION DE LA SAISIE UTILISATEUR
     // On saisit l'email : ceci teste l'intégration entre l'input et le state du hook
-    await user.type(screen.getByTestId("email-input"), "nguyen.nhi@example.com");
+    await user.type(
+      screen.getByTestId("email-input"),
+      "nguyen.nhi@example.com"
+    );
 
     // On saisit le mot de passe : ceci teste la gestion d'état pour un second champ
     await user.type(screen.getByTestId("password-input"), "motdepasse123");
 
     // VÉRIFICATION DES VALEURS : On vérifie que les valeurs sont bien mises à jour
     // Ceci confirme que l'intégration entre inputs et hooks fonctionne
-    expect(screen.getByTestId("email-input")).toHaveValue("nguyen.nhi@example.com");
+    expect(screen.getByTestId("email-input")).toHaveValue(
+      "nguyen.nhi@example.com"
+    );
     expect(screen.getByTestId("password-input")).toHaveValue("motdepasse123");
 
     // ÉTAPE 3: SIMULATION DE LA SOUMISSION
@@ -148,7 +149,15 @@ describe("Login Flow Integration Test", () => {
         "Se connecter"
       );
     });
-  });
+
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Test if the page is redirect to /dashboard
+    await waitFor(() => {
+        expect(mockRouterPush).toHaveBeenCalledTimes(1);
+        expect(mockRouterPush).toHaveBeenCalledWith("/dashboard");
+      });
+    });
 
   /**
    * TEST D'INTÉGRATION : Gestion d'erreur
@@ -181,7 +190,11 @@ describe("Login Flow Integration Test", () => {
     render(<LoginPage />);
 
     // SIMULATION DU FLUX AVEC ERREUR
-    await user.type(screen.getByTestId("email-input"), "nguyen.wrong@example.com");
+    await user.type(
+      screen.getByTestId("email-input"),
+      "nguyen.wrong@example.com"
+    );
+
     await user.type(screen.getByTestId("password-input"), "wrongpassword");
     await user.click(screen.getByTestId("submit-button"));
 
