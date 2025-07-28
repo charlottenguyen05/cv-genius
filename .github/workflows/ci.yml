@@ -9,6 +9,12 @@ on:
 env:
   NODE_VERSION: '18'
   PYTHON_VERSION: '3.9'
+  # Add build-time environment variables
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || 'placeholder-gemini-key' }}
+  NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'placeholder-secret-for-build-only' }}
+  NEXTAUTH_URL: 'http://localhost:3000'
 
 jobs:
   test-and-quality:
@@ -81,7 +87,7 @@ jobs:
           sys.path.append('scripts')
           try:
               from pdf_parser import CVParser
-              from pdf_parser_improved import CVParser as CVParserImproved
+              from pdf_parser_improved import ImprovedCVParser as CVParserImproved
               print('✅ Python parsers import successfully')
           except ImportError as e:
               print(f'❌ Import error: {e}')
