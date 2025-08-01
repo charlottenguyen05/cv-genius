@@ -26,6 +26,7 @@ RÈGLES ABSOLUES :
 4. Si une section est vide dans l'entrée, retourne un tableau vide []
 5. N'ajoute AUCUN commentaire, AUCUN texte d'explication
 6. Assure-toi que tous les IDs sont préservés ou générés de façon unique
+7. Maximum 3 catégories différentes dans la section "skills"
 
 AMÉLIORATIONS À APPORTER :
 - Utilise des verbes d'action puissants (développé, optimisé, dirigé, etc.)
@@ -33,6 +34,7 @@ AMÉLIORATIONS À APPORTER :
 - Professionnalise le langage
 - Optimise pour les ATS (mots-clés pertinents)
 - Adapte au marché français
+- Description pour "experiences" et "education" en 3-4 points clés séparées par seulement un retour à la ligne
 
 STRUCTURE JSON OBLIGATOIRE :
 {

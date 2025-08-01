@@ -1,7 +1,7 @@
 import React from 'react'
 import { Upload, FileText, Loader2, CheckCircle, User, Mail, Phone, Briefcase, GraduationCap } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import DeleteButton from '@/components/dashboard/forms/DeleteButton'
+import DeleteButton from '@/components/ui/DeleteButton'
 import { CVFormData } from '@/types'
 
 interface FileUploadSectionProps {

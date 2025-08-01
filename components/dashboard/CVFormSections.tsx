@@ -4,41 +4,49 @@ import { Button } from '@/components/ui/Button'
 import InputField from '@/components/dashboard/forms/InputField'
 import TextAreaField from '@/components/dashboard/forms/TextAreaField'
 import SelectField from '@/components/dashboard/forms/SelectField'
-import DeleteButton from '@/components/dashboard/forms/DeleteButton'
+import DeleteButton from '@/components/ui/DeleteButton'
 import { CVFormData, Experience, Education, Skill, Language } from '@/types'
+
+interface ExperienceHandlers {
+  add: () => void
+  update: (index: number, field: keyof Experience, value: string | boolean) => void
+  remove: (index: number) => void
+}
+
+interface EducationHandlers {
+  add: () => void
+  update: (index: number, field: keyof Education, value: string) => void
+  remove: (index: number) => void
+}
+
+interface SkillHandlers {
+  add: () => void
+  update: (index: number, field: keyof Skill, value: string) => void
+  remove: (index: number) => void
+}
+
+interface LanguageHandlers {
+  add: () => void
+  update: (index: number, field: keyof Language, value: string) => void
+  remove: (index: number) => void
+}
 
 interface CVFormSectionsProps {
   formData: CVFormData
   updatePersonalInfo: (field: keyof CVFormData['personalInfo'], value: string) => void
-  addExperience: () => void
-  updateExperience: (index: number, field: keyof Experience, value: string | boolean) => void
-  removeExperience: (index: number) => void
-  addEducation: () => void
-  updateEducation: (index: number, field: keyof Education, value: string) => void
-  removeEducation: (index: number) => void
-  addSkill: () => void
-  updateSkill: (index: number, field: keyof Skill, value: string) => void
-  removeSkill: (index: number) => void
-  addLanguage: () => void
-  updateLanguage: (index: number, field: keyof Language, value: string) => void
-  removeLanguage: (index: number) => void
+  experienceHandlers: ExperienceHandlers
+  educationHandlers: EducationHandlers
+  skillHandlers: SkillHandlers
+  languageHandlers: LanguageHandlers
 }
 
 const CVFormSections: React.FC<CVFormSectionsProps> = ({
   formData,
   updatePersonalInfo,
-  addExperience,
-  updateExperience,
-  removeExperience,
-  addEducation,
-  updateEducation,
-  removeEducation,
-  addSkill,
-  updateSkill,
-  removeSkill,
-  addLanguage,
-  updateLanguage,
-  removeLanguage
+  experienceHandlers,
+  educationHandlers,
+  skillHandlers,
+  languageHandlers
 }) => {
   return (
     <>
@@ -111,7 +119,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
             type="button"
             variant="outline"
             size="sm"
-            onClick={addExperience}
+            onClick={experienceHandlers.add}
             className="flex items-center space-x-2"
             data-testid="add-experience-button"
           >
@@ -125,7 +133,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium text-gray-900">Expérience {index + 1}</h3>
               <DeleteButton
-                onClick={() => removeExperience(index)}
+                onClick={() => experienceHandlers.remove(index)}
                 variant="trash"
                 size="md"
                 ariaLabel="Supprimer cette expériences professionnelles"
@@ -138,7 +146,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 label="Entreprise"
                 name={`experience-company-${index}`}
                 value={experience.company || ''}
-                onChange={(value) => updateExperience(index, 'company', value)}
+                onChange={(value) => experienceHandlers.update(index, 'company', value)}
                 placeholder="Nom de l'entreprise"
                 required
                 data-testid={`experience-${index}-company`}
@@ -147,7 +155,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 label="Poste"
                 name={`experience-position-${index}`}
                 value={experience.position || ''}
-                onChange={(value) => updateExperience(index, 'position', value)}
+                onChange={(value) => experienceHandlers.update(index, 'position', value)}
                 placeholder="Intitulé du poste"
                 required
                 data-testid={`experience-${index}-position`}
@@ -156,7 +164,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 label="Localisation"
                 name={`experience-location-${index}`}
                 value={experience.location || ''}
-                onChange={(value) => updateExperience(index, 'location', value)}
+                onChange={(value) => experienceHandlers.update(index, 'location', value)}
                 placeholder="Ville, Pays"
                 data-testid={`experience-${index}-location`}
               />
@@ -165,7 +173,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 name={`experience-startDate-${index}`}
                 type="month"
                 value={experience.startDate || ''}
-                onChange={(value) => updateExperience(index, 'startDate', value)}
+                onChange={(value) => experienceHandlers.update(index, 'startDate', value)}
                 placeholder="02/2025"
                 required
                 data-testid={`experience-${index}-startDate`}
@@ -175,7 +183,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 name={`experience-endDate-${index}`}
                 type="month"
                 value={experience.endDate || ''}
-                onChange={(value) => updateExperience(index, 'endDate', value)}
+                onChange={(value) => experienceHandlers.update(index, 'endDate', value)}
                 placeholder={experience.isCurrentPosition ? 'Poste actuel' : '05/2025'}
                 data-testid={`experience-${index}-endDate`}
               />
@@ -184,7 +192,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                   type="checkbox"
                   id={`experience-current-${index}`}
                   checked={experience.isCurrentPosition || false}
-                  onChange={(e) => updateExperience(index, 'isCurrentPosition', e.target.checked)}
+                  onChange={(e) => experienceHandlers.update(index, 'isCurrentPosition', e.target.checked)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   data-testid={`experience-${index}-current`}
                 />
@@ -198,7 +206,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
               label="Description"
               name={`experience-description-${index}`}
               value={experience.description || ''}
-              onChange={(value) => updateExperience(index, 'description', value)}
+              onChange={(value) => experienceHandlers.update(index, 'description', value)}
               placeholder="Décrivez vos responsabilités et réalisations..."
               rows={4}
               data-testid={`experience-${index}-description`}
@@ -215,7 +223,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
             type="button"
             variant="outline"
             size="sm"
-            onClick={addEducation}
+            onClick={educationHandlers.add}
             className="flex items-center space-x-2"
             data-testid="add-education-button"
           >
@@ -229,7 +237,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium text-gray-900">Formation {index + 1}</h3>
               <DeleteButton
-                onClick={() => removeEducation(index)}
+                onClick={() => educationHandlers.remove(index)}
                 variant="trash"
                 size="md"
                 ariaLabel="Supprimer cette formation"
@@ -242,7 +250,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 label="Établissement"
                 name={`education-institution-${index}`}
                 value={education.institution || ''}
-                onChange={(value) => updateEducation(index, 'institution', value)}
+                onChange={(value) => educationHandlers.update(index, 'institution', value)}
                 placeholder="Nom de l'établissement"
                 required
                 data-testid={`education-${index}-school`}
@@ -251,7 +259,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 label="Diplôme"
                 name={`education-degree-${index}`}
                 value={education.degree || ''}
-                onChange={(value) => updateEducation(index, 'degree', value)}
+                onChange={(value) => educationHandlers.update(index, 'degree', value)}
                 placeholder="Master, Licence, etc."
                 required
                 data-testid={`education-${index}-degree`}
@@ -260,7 +268,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 label="Domaine d'étude"
                 name={`education-field-${index}`}
                 value={education.field || ''}
-                onChange={(value) => updateEducation(index, 'field', value)}
+                onChange={(value) => educationHandlers.update(index, 'field', value)}
                 placeholder="Informatique, Marketing, etc."
                 data-testid={`education-${index}-field`}
               />
@@ -269,7 +277,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 name={`education-startDate-${index}`}
                 type="month"
                 value={education.startDate || ''}
-                onChange={(value) => updateEducation(index, 'startDate', value)}
+                onChange={(value) => educationHandlers.update(index, 'startDate', value)}
                 placeholder='02/2025'
                 required
                 data-testid={`education-${index}-startDate`}
@@ -279,7 +287,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 name={`education-endDate-${index}`}
                 type="month"
                 value={education.endDate || ''}
-                onChange={(value) => updateEducation(index, 'endDate', value)}
+                onChange={(value) => educationHandlers.update(index, 'endDate', value)}
                 placeholder='05/2025'
                 data-testid={`education-${index}-endDate`}
               />
@@ -289,7 +297,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
               label="Description"
               name={`education-description-${index}`}
               value={education.description || ''}
-              onChange={(value) => updateEducation(index, 'description', value)}
+              onChange={(value) => educationHandlers.update(index, 'description', value)}
               placeholder="Projets importants, mentions, etc."
               rows={3}
               data-testid={`education-${index}-description`}
@@ -306,7 +314,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
             type="button"
             variant="outline"
             size="sm"
-            onClick={addSkill}
+            onClick={skillHandlers.add}
             className="flex items-center space-x-2"
             data-testid="add-skill-button"
           >
@@ -321,7 +329,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-900">Compétence {index + 1}</span>
                 <DeleteButton
-                  onClick={() => removeSkill(index)}
+                  onClick={() => skillHandlers.remove(index)}
                   variant="trash"
                   size="md"
                   ariaLabel="Supprimer cette compétence"
@@ -333,7 +341,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 label="Nom"
                 name={`skill-name-${index}`}
                 value={skill.name || ''}
-                onChange={(value) => updateSkill(index, 'name', value)}
+                onChange={(value) => skillHandlers.update(index, 'name', value)}
                 placeholder="JavaScript, Leadership, etc."
                 required
                 data-testid={`skill-${index}-name`}
@@ -343,7 +351,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 label="Catégorie"
                 name={`skill-category-${index}`}
                 value={skill.category || 'technical'}
-                onChange={(value) => updateSkill(index, 'category', value)}
+                onChange={(value) => skillHandlers.update(index, 'category', value)}
                 options={[
                   { value: 'technical', label: 'Technique' },
                   { value: 'soft', label: 'Soft skills' },
@@ -358,7 +366,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 label="Niveau"
                 name={`skill-level-${index}`}
                 value={skill.level || 'intermediate'}
-                onChange={(value) => updateSkill(index, 'level', value)}
+                onChange={(value) => skillHandlers.update(index, 'level', value)}
                 options={[
                   { value: 'beginner', label: 'Débutant' },
                   { value: 'intermediate', label: 'Intermédiaire' },
@@ -381,7 +389,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
             type="button"
             variant="outline"
             size="sm"
-            onClick={addLanguage}
+            onClick={languageHandlers.add}
             className="flex items-center space-x-2"
             data-testid="add-language-button"
           >
@@ -396,7 +404,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-900">Langue {index + 1}</span>
                 <DeleteButton
-                  onClick={() => removeLanguage(index)}
+                  onClick={() => languageHandlers.remove(index)}
                   variant="trash"
                   size="md"
                   ariaLabel="Supprimer cette langue"
@@ -408,7 +416,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 label="Langue"
                 name={`language-name-${index}`}
                 value={language.name || ''}
-                onChange={(value) => updateLanguage(index, 'name', value)}
+                onChange={(value) => languageHandlers.update(index, 'name', value)}
                 placeholder="Français, Anglais, etc."
                 required
                 data-testid={`language-${index}-name`}
@@ -418,7 +426,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                 label="Niveau"
                 name={`language-level-${index}`}
                 value={language.level || 'B1'}
-                onChange={(value) => updateLanguage(index, 'level', value)}
+                onChange={(value) => languageHandlers.update(index, 'level', value)}
                 options={[
                   { value: 'A1', label: 'A1 - Débutant' },
                   { value: 'A2', label: 'A2 - Élémentaire' },
@@ -439,4 +447,4 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
   )
 }
 
-export default CVFormSections 
+export default CVFormSections

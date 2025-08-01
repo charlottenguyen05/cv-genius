@@ -3,6 +3,18 @@ import { NextRequest } from "next/server";
 import { geminiService } from "@/lib/gemini/service";
 import type { CVFormData } from "@/types";
 
+// Mock Supabase to avoid ES module issues
+jest.mock("@supabase/supabase-js", () => ({
+  createClient: jest.fn().mockReturnValue({
+    auth: {
+      getUser: jest.fn().mockResolvedValue({
+        data: { user: { id: "test-user" } },
+        error: null,
+      }),
+    },
+  }),
+}));
+
 // ✅ Mock du service Gemini seulement (NextResponse est mocké globalement)
 jest.mock("@/lib/gemini/service", () => ({
   geminiService: {
@@ -11,9 +23,12 @@ jest.mock("@/lib/gemini/service", () => ({
 }));
 
 // ✅ Fonction utilitaire pour créer un MockNextRequest objet (NextRequest is now mocked by MockNextRequest)
-function createRequest(body: any): NextRequest {
+function createRequest(body: any, headers: Record<string, string> = {}): NextRequest {
   return {
     json: async () => body,
+    headers: {
+      get: (name: string) => headers[name] || null,
+    },
   } as unknown as NextRequest;
 }
 
@@ -31,7 +46,7 @@ describe("API POST /api/cv/complete-improve", () => {
   });
 
   it("return 400 if no data is provided", async () => {
-    const req = createRequest({});
+    const req = createRequest({}, { authorization: "Bearer mock-token" });
     const res = await POST(req);
     const json = await res.json();
 
@@ -41,7 +56,7 @@ describe("API POST /api/cv/complete-improve", () => {
   });
 
   it("return 400 if personal data is missed", async () => {
-    const req = createRequest({ formData: { personalInfo: { name: "" } } });
+    const req = createRequest({ formData: { personalInfo: { name: "" } } }, { authorization: "Bearer mock-token" });
     const res = await POST(req);  // res = MockResponse object
     const json = await res.json();
 
@@ -53,7 +68,7 @@ describe("API POST /api/cv/complete-improve", () => {
     (geminiService.improveCompleteCV as jest.Mock).mockRejectedValue(
       new Error("Gemini Down")
     );
-    const req = createRequest({ formData: validCV });
+    const req = createRequest({ formData: validCV }, { authorization: "Bearer mock-token" });
 
     const res = await POST(req);
     const json = await res.json();
@@ -68,7 +83,7 @@ describe("API POST /api/cv/complete-improve", () => {
     (geminiService.improveCompleteCV as jest.Mock).mockResolvedValue({
       personalInfo: null,
     });
-    const req = createRequest({ formData: validCV });
+    const req = createRequest({ formData: validCV }, { authorization: "Bearer mock-token" });
 
     const res = await POST(req);
     const json = await res.json();
@@ -79,7 +94,7 @@ describe("API POST /api/cv/complete-improve", () => {
 
   it("return 200 and the correct CV JSON format", async () => {
     (geminiService.improveCompleteCV as jest.Mock).mockResolvedValue(validCV);
-    const req = createRequest({ formData: validCV });
+    const req = createRequest({ formData: validCV }, { authorization: "Bearer mock-token" });
 
     const res = await POST(req);
     const json = await res.json();

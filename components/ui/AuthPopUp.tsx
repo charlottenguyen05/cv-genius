@@ -4,22 +4,31 @@ import React from 'react'
 import { Button } from '@/components/ui/Button'
 import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
+import { CVFormData } from '@/types'
+import { storeCVFormData } from '@/lib/utils/localStorage'
 
 interface AuthPopUpProps {
   isOpen: boolean
   onClose: () => void
+  formData?: CVFormData
 }
 
-const AuthPopUp: React.FC<AuthPopUpProps> = ({ isOpen, onClose }) => {
+const AuthPopUp: React.FC<AuthPopUpProps> = ({ isOpen, onClose, formData }) => {
   const router = useRouter()
 
   if (!isOpen) return null
 
   const handleSignIn = () => {
+    if (formData) {
+      storeCVFormData(formData)
+    }
     router.push('/login')
   }
 
   const handleSignUp = () => {
+    if (formData) {
+      storeCVFormData(formData)
+    }
     router.push('/register')
   }
 

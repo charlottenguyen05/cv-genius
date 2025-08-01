@@ -8,7 +8,6 @@ export const runtime = "nodejs";
 
 /**
  * Nouvelle API de parsing PDF utilisant Python
- * Remplace complètement l'ancien système
  */
 export async function POST(request: NextRequest) {
   try {
@@ -311,23 +310,3 @@ function formatParsedData(rawData: any): CVFormData {
   return formatted;
 }
 
-/**
- * Endpoint de test pour vérifier le bon fonctionnement
- */
-export async function GET() {
-  return NextResponse.json({
-    message: "CV Genius PDF Parser API",
-    version: "2.0.0",
-    status: "active",
-    supportedFormats: ["application/pdf"],
-    maxFileSize: "10MB",
-    features: [
-      "Extraction d'informations personnelles",
-      "Analyse des expériences professionnelles",
-      "Extraction de la formation",
-      "Détection des compétences techniques",
-      "Reconnaissance des langues",
-    ],
-    timestamp: new Date().toISOString(),
-  });
-}

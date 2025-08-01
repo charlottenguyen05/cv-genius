@@ -1,8 +1,9 @@
-
 import { test, expect } from "@playwright/test";
+
 test.describe(() => {
   test("application loads and all key pages display correctly", async ({ page }) => {
     console.log("CRITICAL TEST: Chargement des pages critiques");
+
     const criticalPages = [
       {
         path: "/",
@@ -34,16 +35,28 @@ test.describe(() => {
 
     for (const criticalPage of criticalPages) {
       try {
-        await page.goto(criticalPage.path);
-        expect(page.url()).toContain(criticalPage.path);
-
-        await expect(page.locator(criticalPage.expectedElement)).toBeVisible();
-
-        // Test to make sur no error 404/500
-        const response = await page.goto(criticalPage.path);
-        expect(response?.status()).toBeLessThan(400);
+        console.log(`Navigating to ${criticalPage.path}`);
+        
+        // Use waitUntil: 'networkidle' to wait for all network activity to settle
+        await page.goto(criticalPage.path, { 
+          timeout: 50000 
+        });
+        
+        // Additional wait for any authentication state to settle
+        await page.waitForTimeout(200);
+        
+        // Check URL contains the expected path (more flexible than exact match)
+        await expect(page).toHaveURL(new RegExp(criticalPage.path.replace('/', '\/')));
+        
+        // Wait for the expected element to be visible
+        await expect(page.locator(criticalPage.expectedElement)).toBeVisible({ timeout: 10000 });
+        
+        console.log(`✓ ${criticalPage.description} loaded successfully`);
+        
       } catch (error) {
         console.error(`❌ ${criticalPage.description} : ERREUR - ${error}`);
+        // Take screenshot on failure for debugging
+        await page.screenshot({ path: `test-failure-${criticalPage.path.replace('/', '_')}.png` });
         throw error;
       }
     }

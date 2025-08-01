@@ -28,6 +28,7 @@ export default function useAuthForm(
         passwordError = true;
         setLoading(false);
       }
+      setShowToast(true);
     }
     if (!passwordError) {
       try {

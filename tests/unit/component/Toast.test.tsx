@@ -80,7 +80,7 @@ describe("Toast", () => {
     
     render(<Toast message="Closable message" onClose={onClose} />);
     
-    const closeButton = screen.getByRole("button", { name: /close/i });
+    const closeButton = screen.getByRole("button", { name: /Supprimer/i });
     await user.click(closeButton);
     
     expect(onClose).toHaveBeenCalled();
@@ -92,8 +92,8 @@ describe("Toast", () => {
     const toast = screen.getByRole("alert");
     expect(toast).toBeInTheDocument();
     
-    const closeButton = screen.getByRole("button", { name: /close/i });
-    expect(closeButton).toHaveAttribute("aria-label", "Close");
+    const closeButton = screen.getByRole("button", { name: /supprimer/i });
+    expect(closeButton).toHaveAttribute("aria-label", "Supprimer");
   });
 
   it("should not call onClose if not provided", () => {

@@ -90,8 +90,10 @@ export const useFileUpload = (onDataParsed?: (data: CVFormData) => void) => {
     }
   }
 
+
+
   // Gestion de la sélection de fichier
-  const handleFileSelect = async (file: File) => {
+  const processFile = async (file: File) => {
     console.log('📁 Fichier sélectionné:', { name: file.name, size: file.size, type: file.type })
     
     // Validation
@@ -122,7 +124,7 @@ export const useFileUpload = (onDataParsed?: (data: CVFormData) => void) => {
     
     const files = Array.from(e.dataTransfer.files)
     if (files.length > 0) {
-      handleFileSelect(files[0])
+      processFile(files[0])
     }
   }
 
@@ -130,7 +132,7 @@ export const useFileUpload = (onDataParsed?: (data: CVFormData) => void) => {
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files && files.length > 0) {
-      handleFileSelect(files[0])
+      processFile(files[0])
     }
     // Reset l'input pour permettre la re-sélection du même fichier
     e.target.value = ''
@@ -145,10 +147,13 @@ export const useFileUpload = (onDataParsed?: (data: CVFormData) => void) => {
     setIsUploading(false)
   }
 
-  // Définir une erreur manuellement
-  const setFileError = (error: string) => {
-    setErrors({ ...errors, file: error })
-  }
+  // Alias for processFile to match test expectations
+  const handleFileSelect = processFile;
+
+  // Function to set file error manually
+  const setFileError = (errorMessage: string) => {
+    setErrors({ file: errorMessage });
+  };
 
   return {
     // État
@@ -160,14 +165,13 @@ export const useFileUpload = (onDataParsed?: (data: CVFormData) => void) => {
     
     // Setters
     setIsDragOver,
-    setParsedData,
     setFileError,
     
     // Actions
     handleDrop,
     handleFileInput,
-    removeFile,
+    handleFileSelect,
     parseFile,
-    handleFileSelect
+    removeFile
   }
 } 

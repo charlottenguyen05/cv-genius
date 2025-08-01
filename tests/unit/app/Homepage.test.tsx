@@ -300,7 +300,7 @@ describe("HomePage", () => {
 
       const ctaBuildCvBtn = screen.getByTestId("cta-build-cv");
       expect(ctaBuildCvBtn).toBeInTheDocument();
-      expect(ctaBuildCvBtn).toHaveAttribute("href", "/cv-builder");
+      expect(ctaBuildCvBtn).toHaveAttribute("href", "/dashboard");
       expect(ctaBuildCvBtn).toHaveClass(
         "inline-flex",
         "items-center",

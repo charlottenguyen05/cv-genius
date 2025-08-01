@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { POST, GET } from "@/app/api/parser/route";
+import { POST } from "@/app/api/parser/route";
 import { spawn } from "child_process";
 import { writeFile, unlink, access, mkdir } from "fs/promises";
 import { EventEmitter } from "events";
@@ -24,30 +24,6 @@ describe("/api/parser Route Tests", () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
-  });
-
-  describe("GET endpoint", () => {
-    it("should return API information", async () => {
-      const response = await GET();
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data).toEqual({
-        message: "CV Genius PDF Parser API",
-        version: "2.0.0",
-        status: "active",
-        supportedFormats: ["application/pdf"],
-        maxFileSize: "10MB",
-        features: [
-          "Extraction d'informations personnelles",
-          "Analyse des expériences professionnelles",
-          "Extraction de la formation",
-          "Détection des compétences techniques",
-          "Reconnaissance des langues",
-        ],
-        timestamp: expect.any(String),
-      });
-    });
   });
 
   describe("POST endpoint", () => {

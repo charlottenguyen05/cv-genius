@@ -5,6 +5,7 @@ import Toast from "@/components/ui/Toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+
 export default function RegisterPage() {
   const router = useRouter();
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -18,6 +19,11 @@ export default function RegisterPage() {
     handleSubmit,
     showToast,
   } = useAuthForm("register");
+
+  const handleRedirect = () => {
+    router.push("/dashboard");
+  }
+
   const INPUT_CLASSES =
     "w-full px-3 py-2 border rounded-full focus:outline-none focus:ring focus:border-blue-400";
 
@@ -27,7 +33,6 @@ export default function RegisterPage() {
         onSubmit={handleSubmit}
         className="w-full max-w-md bg-white p-8 rounded-lg shadow-md text-gray-800"
         aria-label="Register form"
-        // 🔧 SUGGESTION: Ajouter data-testid pour les tests E2E
         data-testid="register-form"
       >
         <h1 className="text-2xl font-bold mb-6 text-center">Créer un compte</h1>
@@ -44,7 +49,6 @@ export default function RegisterPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Votre email"
-            // 🔧 SUGGESTION: Ajouter data-testid pour les tests
             data-testid="email-input"
           />
         </div>
@@ -60,7 +64,6 @@ export default function RegisterPage() {
             className={INPUT_CLASSES}
             value={password}
             placeholder="Votre mot de passe"
-            // 🔧 SUGGESTION: Ajouter validation en temps réel
             onChange={(e) => {
               setPassword(e.target.value);
             }}
@@ -113,7 +116,6 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* 🔧 SUGGESTION: Ajouter confirmation de mot de passe */}
         <div className="mb-4">
           <label
             htmlFor="confirmPassword"
@@ -165,7 +167,7 @@ export default function RegisterPage() {
           data-testid="successful-register-toast"
           message="Compte créé avec succès ! Veuillez-vous confirmer votre email. Vous
           pouvez désormais vous connecter."
-          onClose={() => router.push("/login")}
+          onClose={handleRedirect}
         />
       )}
     </div>

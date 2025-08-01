@@ -15,6 +15,7 @@ interface SelectFieldProps {
   placeholder?: string;
   required?: boolean;
   className?: string;
+  "data-testid"?: string;
 }
 
 const SelectField: React.FC<SelectFieldProps> = ({
@@ -26,6 +27,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
   placeholder = "Sélectionner une option",
   required = false,
   className = "",
+  "data-testid": testId,
 }) => {
   return (
     <div className={className}>
@@ -44,6 +46,7 @@ const SelectField: React.FC<SelectFieldProps> = ({
           onChange={(e) => onChange(e.target.value)}
           className="w-full px-3 py-2 pr-10 border text-gray-900 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white cursor-pointer hover:border-gray-400 transition-colors"
           required={required}
+          data-testid={testId}
         >
           {placeholder && (
             <option value="" disabled>

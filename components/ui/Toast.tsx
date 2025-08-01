@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Button } from "./Button";
+import DeleteButton from "./DeleteButton";
 
 interface ToastProps {
   message: string;
@@ -50,13 +50,7 @@ const Toast: React.FC<ToastProps> = ({
       data-testid = {dataTestId}
     >
       <span>{message}</span>
-      <Button
-        onClick={handleClose}
-        className="ml-4 text-white font-bold focus:outline-none"
-        aria-label="Close"
-      >
-        &times;
-      </Button>
+      <DeleteButton onClick={handleClose} variant="x" size="md" aria-label="Close" className="ml-4"/>
     </div>
   );
 };

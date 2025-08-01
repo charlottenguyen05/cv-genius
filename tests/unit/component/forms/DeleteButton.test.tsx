@@ -2,7 +2,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import DeleteButton from '@/components/dashboard/forms/DeleteButton';
+import DeleteButton from '@/components/ui/DeleteButton';
 
 // Inline mock for lucide-react icons (Trash2 and X)
 jest.mock('lucide-react', () => ({

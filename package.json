@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit",
     "test": "jest",
     "test:unit": "jest tests/unit",
+    "test:unit:coverage": "jest tests/unit --coverage",
     "test:integration": "jest tests/integration",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -17,7 +18,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "ci-local": "./scripts/pre-push.sh"
   },
   "dependencies": {
     "@google/genai": "^1.9.0",

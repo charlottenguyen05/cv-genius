@@ -18,6 +18,7 @@ export default function LoginPage() {
     showToast,
   } = useAuthForm("login");
 
+
   const INPUT_CLASSES =
     "w-full px-3 py-2 border rounded-full focus:outline-none focus:ring focus:border-blue-400";
 
@@ -81,6 +82,15 @@ export default function LoginPage() {
             className="text-sm text-blue-600 hover:text-blue-800"
           >
             Mot de passe oublié ?
+          </Link>
+        </div>
+        <div className="mt-4 text-center">
+          <span className="text-sm text-gray-600">Pas encore de compte ? </span>
+          <Link
+            href="/register"
+            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Créer un compte
           </Link>
         </div>
       </form>

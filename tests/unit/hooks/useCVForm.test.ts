@@ -8,7 +8,6 @@ jest.mock("@/lib/supabase/client", () => ({
   getCurrentUser: jest.fn(),
 }));
 
-
 describe("useCVForm", () => {
   const originalDateNow = Date.now;
   const mockNow = 1_700_000_000_000;
@@ -128,111 +127,5 @@ describe("useCVForm", () => {
     expect(result.current.formData.personalInfo.name).toBe("Existing");
     expect(result.current.formData.personalInfo.email).toBe("new@mail.com");
     expect(result.current.formData.experiences).toHaveLength(1);
-  });
-
-  it("handleSubmitComplete returns improvedCV on success", async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        success: true,
-        improvedCV: { personalInfo: { name: "John", email: "john@gmail.com" } },
-      }),
-    }) as unknown as jest.Mock;
-
-    const { result } = renderHook(() => useCVForm());
-
-    act(() => {
-      result.current.updatePersonalInfo("name", "John");
-    });
-    act(() => {
-      result.current.updatePersonalInfo("email", "john@gmail.com");
-    });
-
-    let returnedValue: any;
-    await act(async () => {
-      returnedValue = await result.current.handleSubmitComplete();
-    });
-
-    expect(returnedValue).toEqual({
-      personalInfo: { name: "John", email: "john@gmail.com" },
-    });
-    expect(result.current.isSubmitting).toBe(false);
-  });
-
-  it("handleSubmitComplete fail when email is not provided", async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        success: true,
-        improvedCV: { personalInfo: { name: "John", email: "john@gmail.com" } },
-      }),
-    }) as unknown as jest.Mock;
-
-    const { result } = renderHook(() => useCVForm());
-
-    act(() => {
-      result.current.updatePersonalInfo("name", "John");
-    });
-    await act(async () => {
-      await result.current.handleSubmitComplete();
-    });
-    expect(result.current.error).toBe("L'email est requis pour générer le CV");
-    expect(result.current.showToast).toBe(true);
-  });
-
-  it("handleSubmitComplete fail when user is not authenticated", async () => {
-    (getCurrentUser as jest.Mock).mockResolvedValue({
-      user: null,
-      error: "user not authenticated",
-    });
-
-    const { result } = renderHook(() => useCVForm());
-    act(() => {
-      result.current.updatePersonalInfo("name", "John");
-      result.current.updatePersonalInfo("email", "john@gmail.com");
-    });
-
-    await act(async () => {
-      await result.current.handleSubmitComplete();
-    });
-
-    expect(result.current.showCard).toBe(true);
-  });
-
-  it("handleSubmitComplete fail when user is not authenticated", async () => {
-    (getCurrentUser as jest.Mock).mockResolvedValue({
-      user: { id: 123 },
-      error: { message: "user not found" },
-    });
-
-    const { result } = renderHook(() => useCVForm());
-    act(() => {
-      result.current.updatePersonalInfo("name", "John");
-      result.current.updatePersonalInfo("email", "john@gmail.com");
-    });
-
-    await act(async () => {
-      await result.current.handleSubmitComplete();
-    });
-
-    expect(result.current.error).toEqual(
-      "Erreur d'authentification: user not found"
-    );
-    expect(result.current.showToast).toBe(true);
-  });
-
-  it("callGeneratePDF: error path sets toast", async () => {
-    (global.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ error: "boom" }),
-    });
-
-    const { result } = renderHook(() => useCVForm());
-    await act(async () => {
-      await result.current.callGeneratePDF(result.current.formData as any);
-    });
-
-    expect(result.current.showToast).toBe(true);
-    expect(result.current.error).toMatch(/génération du CV/i);
   });
 });

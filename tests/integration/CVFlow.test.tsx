@@ -1,7 +1,7 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import DashboardPage from "@/app/dashboard/page";
-import { getCurrentUser } from "@/lib/supabase/client";
+import { getCurrentUser, supabase } from "@/lib/supabase/client";
 import { CVFormData } from "@/types";
 import { act } from "react";
 
@@ -10,6 +10,12 @@ const mockRouterPush = jest.fn();
 
 jest.mock("@/lib/supabase/client", () => ({
   getCurrentUser: jest.fn(),
+  supabase: {
+    auth: {
+      getSession: jest.fn(),
+      getUser: jest.fn(),
+    },
+  },
 }));
 
 jest.mock("next/navigation", () => ({
@@ -30,6 +36,7 @@ global.URL.revokeObjectURL = mockRevokeObjectURL;  // Clean up the temporary URL
 
 describe("CV Flow Integration Test", () => {
   const mockGetCurrentUser = getCurrentUser as jest.MockedFunction<typeof getCurrentUser>;
+  const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 
   // Données de test simulant un CV parsé
   const mockParsedData: CVFormData = {
@@ -85,6 +92,20 @@ describe("CV Flow Integration Test", () => {
     jest.clearAllMocks();
     mockFetch.mockClear();
     mockCreateObjectURL.mockReturnValue("blob:mock-url");
+    
+    // Mock Supabase auth session
+    (mockSupabase.auth.getSession as jest.MockedFunction<typeof mockSupabase.auth.getSession>).mockResolvedValue({
+      data: {
+        session: {
+          user: {
+            id: "123",
+            email: "test@example.com",
+          },
+          access_token: "mock-token",
+        },
+      },
+      error: null,
+    } as any);
   });
 
   it("should open modal when generate button is clicked with valid data", async () => {

@@ -196,7 +196,7 @@ export default function HomePage() {
           {/* 🔧 SUGGESTION: Conditionner selon l'état utilisateur */}
           {user ? (
             <Link
-              href="/cv-builder"
+              href="/dashboard"
               className="inline-flex items-center bg-white text-blue-600 hover:bg-blue-50 px-8 py-4 rounded-full font-semibold text-lg transition-colors"
               data-testid="cta-build-cv"
             >

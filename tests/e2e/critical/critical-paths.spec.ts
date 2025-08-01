@@ -36,7 +36,6 @@ test.describe("Critical Paths", () => {
   }) => {
     console.log("🚀 CRITICAL TEST : Parcours utilisateur complet");
     let registeremail = generateRandomEmail();
-    const loginemail = registeremail;
     const password = "Password123";
     const dashboardPage = new DashboardPage(page, browserName);
 
@@ -49,6 +48,8 @@ test.describe("Critical Paths", () => {
     await expect(page.locator('[data-testid="register-form"]')).toBeVisible();
 
     // Remplir le formulaire d'inscription
+    await page.locator('[data-testid="email-input"]').click();
+    await page.locator('[data-testid="email-input"]').clear();
     await page.fill('[data-testid="email-input"]', registeremail);
     await page.fill('[data-testid="password-input"]', password);
     await page.fill('[data-testid="cfpassword-input"]', password);
@@ -59,22 +60,9 @@ test.describe("Critical Paths", () => {
       page.locator('[data-testid="successful-register-toast"]')
     ).toBeVisible();
     // Vérifier la redirection vers le dashboard après inscription
-    await expect(page).toHaveURL("/login");
-    await expect(
-      page.getByRole("heading", { name: "Connexion" })
-    ).toBeVisible();
+    await expect(page).toHaveURL("/dashboard");
     console.log("✅ Inscription réussie");
 
-    // 📋 ÉTAPE 2 : SE CONNECTER
-    console.log(`🔐 Connexion de ${loginemail}...`);
-
-    await page.fill('[data-testid="email-input"]', loginemail);
-    await page.fill('[data-testid="password-input"]', password);
-    await page.click('[data-testid="submit-button"]');
-
-    // Attendre la redirection vers le dashboard
-    await expect(page).toHaveURL("/dashboard");
-    console.log("✅ Connexion réussie et redirect vers dashboard");
 
     // 📋 ÉTAPE 3 : MISE EN LIGNE LE CV + PARSER LE CV
     console.log("📄 Étape 3 : Mise en ligne le CV");
@@ -105,16 +93,14 @@ test.describe("Critical Paths", () => {
     console.log("✅ CV généré avec succès");
 
     // 📋 ÉTAPE 5 : VÉRIFICATION FINALE
-    // console.log("🎯 Étape 5 : Vérification finale...");
+    console.log("🎯 Étape 5 : Vérification finale...");
 
-    // // Fermer le modal
-    // await page.click('[data-testid="close-modal-button"]');
-    // await expect(
-    //   page.locator('[data-testid="cv-generation-modal"]')
-    // ).toBeHidden();
+    // Fermer le modal
+    await page.click('[data-testid="preview-cv-button"]', { timeout: 100000 });
 
-    // Vérifier qu'on est toujours sur le dashboard
-    await expect(page).toHaveURL("/dashboard");
+    // Vérifier qu'on est sur preview
+    await page.waitForURL('**/preview/**'); 
+    await expect(page).toHaveURL(/\/preview\/[0-9a-f-]{36}$/);
 
     console.log("🎉 CRITICAL PATH TEST COMPLET RÉUSSI !");
   });

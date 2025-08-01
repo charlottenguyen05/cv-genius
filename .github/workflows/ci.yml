@@ -12,6 +12,7 @@ env:
   # Add build-time environment variables
   NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
   NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-role-key' }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY || 'placeholder-gemini-key' }}
   NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'placeholder-secret-for-build-only' }}
   NEXTAUTH_URL: 'http://localhost:3000'
