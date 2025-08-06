@@ -2,105 +2,124 @@
 import { NextRequest, NextResponse } from "next/server";
 import jsPDF from "jspdf";
 import { CVFormData } from "@/types";
-import { uploadPdfToStorageAdmin, createResumeAdmin } from "@/lib/supabase/server";
-import { createClient } from "@supabase/supabase-js";
+import {
+  uploadPdfToStorageAdmin,
+  createResumeAdmin,
+} from "@/lib/supabase/server";
+import {
+  parseAndValidateCVRequest,
+  createErrorResponse,
+  AuthenticatedUser,
+} from "@/lib/utils/apiRoutes";
 
+/**
+ * Main POST handler for CV generation
+ */
 export async function POST(req: NextRequest) {
   console.log("🚀 Starting CV generation API call");
 
   try {
-    console.log("📥 Parsing request body...");
-    // Get current user using authorization header
-    console.log("👤 Getting current user...");
-    const authHeader = req.headers.get("authorization");
+    // 1. Parse and validate request
+    const { user, cvData } = await parseAndValidateCVRequest(req);
 
-    if (authHeader) {
-      const token = authHeader.replace("Bearer ", "");
-      const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+    // 2. Generate PDF
+    const pdfBuffer = await generatePDF(cvData);
 
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser(token);
-      if (authError || !user) {
-        console.log("Auth failed in CVGenrationModel:", authError?.message || "No user (unauthenticated)");
-        return NextResponse.json({ success: false, error: "User not authenticated" }, { status: 401 });
-      }
+    // 3. Handle file storage and database
+    const { resumeId, pdfPath } = await handleFileStorageAndDatabase(
+      user,
+      cvData,
+      pdfBuffer
+    );
 
-      const { cvData }: { cvData: CVFormData } = await req.json();
-      console.log("✅ Request parsed successfully");
-      console.log(
-        "📋 CV Data received:",
-        JSON.stringify({
-          name: cvData?.personalInfo?.name,
-          email: cvData?.personalInfo?.email,
-          experiencesCount: cvData?.experiences?.length || 0,
-          educationCount: cvData?.education?.length || 0,
-          skillsCount: cvData?.skills?.length || 0,
-          languagesCount: cvData?.languages?.length || 0,
-        })
-      );
+    // 4. Create success response
+    const response = createSuccessResponse(resumeId, pdfPath);
 
-      if (!cvData?.personalInfo?.name || !cvData.personalInfo.email) {
-        console.log("❌ Validation failed: Missing name or email");
-        console.log("Name:", cvData?.personalInfo?.name);
-        console.log("Email:", cvData?.personalInfo?.email);
-        return NextResponse.json({ success: false, error: "Nom + email requis" }, { status: 400 });
-      }
-      console.log("✅ Basic validation passed");
-
-      console.log("📄 Starting PDF generation...");
-      const pdfBuffer = await generatePDF(cvData);
-      console.log("✅ PDF generated successfully, buffer size:", pdfBuffer.length);
-
-      const filePath = `${user.id}/CV_${cvData.personalInfo.name?.replace(/\s+/g, "_")}__${Math.floor(
-        Math.random() * 100
-      )}_${Date.now()}.pdf`;
-      console.log("📁 Generated file path:", filePath);
-
-      // Upload PDF buffer directly to Supabase storage
-      console.log("☁️ Starting Supabase storage upload...");
-      const uploadData = await uploadPdfToStorageAdmin(filePath, pdfBuffer);
-
-      // Create resume record in database
-      console.log("💾 Creating resume record in database...");
-      const resumeData = {
-        user_id: user.id || null,
-        title: filePath,
-        generated_content: uploadData!.path,
-      };
-      console.log("💾 Resume data to insert:", resumeData);
-
-      const resume = await createResumeAdmin(resumeData);
-      console.log("✅ Resume created successfully:", resume);
-
-      // Verify that we have a valid resume ID
-      if (!resume || !resume.id) {
-        console.error("❌ Resume created but no ID returned:", resume);
-        throw new Error("Resume created but no ID returned from database");
-      }
-
-      const response = {
-        success: true,
-        resumeId: resume.id,
-        pdfPath: uploadData!.path,
-        timestamp: new Date().toISOString(),
-      };
-      console.log("🎉 API call completed successfully, response:", response);
-
-      return NextResponse.json(response);
-    } else {
-      console.log("👤 No authorization header found");
-      return NextResponse.json({ success: false, error: "Authentication required" }, { status: 401 });
-    }
-  } catch (e) {
+    console.log("🎉 API call completed successfully, response:", response);
+    return NextResponse.json(response);
+  } catch (error) {
     console.error("💥 ERROR in CV generation API:");
-    console.error("Error message:", e instanceof Error ? e.message : "Unknown error");
-    console.error("Error stack:", e instanceof Error ? e.stack : "No stack trace");
-    console.error("Full error object:", e);
+    console.error(
+      "Error message:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    console.error(
+      "Error stack:",
+      error instanceof Error ? error.stack : "No stack trace"
+    );
+    console.error("Full error object:", error);
 
-    return NextResponse.json({ success: false, error: "Erreur PDF" }, { status: 500 });
+    return createErrorResponse(error, 500);
   }
+}
+
+/**
+ * Handles file upload to storage and database record creation
+ */
+async function handleFileStorageAndDatabase(
+  user: AuthenticatedUser,
+  cvData: CVFormData,
+  pdfBuffer: Buffer
+): Promise<{ resumeId: string; pdfPath: string }> {
+  console.log("📄 PDF generated successfully, buffer size:", pdfBuffer.length);
+
+  // Generate unique file path
+  const filePath = generateFilePath(user.id, cvData.personalInfo.name);
+  console.log("📁 Generated file path:", filePath);
+
+  // Upload PDF buffer to Supabase storage
+  console.log("☁️ Starting Supabase storage upload...");
+  const uploadData = await uploadPdfToStorageAdmin(filePath, pdfBuffer);
+
+  if (!uploadData?.path) {
+    throw new Error("Failed to upload PDF to storage");
+  }
+
+  // Create resume record in database
+  console.log("💾 Creating resume record in database...");
+  const resumeData = {
+    user_id: user.id,
+    title: filePath,
+    generated_content: uploadData.path,
+  };
+  console.log("💾 Resume data to insert:", resumeData);
+
+  const resume = await createResumeAdmin(resumeData);
+  console.log("✅ Resume created successfully:", resume);
+
+  // Verify resume creation
+  if (!resume?.id) {
+    console.error("❌ Resume created but no ID returned:", resume);
+    throw new Error("Resume created but no ID returned from database");
+  }
+
+  return {
+    resumeId: resume.id,
+    pdfPath: uploadData.path,
+  };
+}
+
+/**
+ * Generates a unique file path for the PDF
+ */
+function generateFilePath(userId: string, name?: string): string {
+  const sanitizedName = name?.replace(/\s+/g, "_") || "CV";
+  const randomSuffix = Math.floor(Math.random() * 100);
+  const timestamp = Date.now();
+
+  return `${userId}/CV_${sanitizedName}__${randomSuffix}_${timestamp}.pdf`;
+}
+
+/**
+ * Creates a success response object
+ */
+function createSuccessResponse(resumeId: string, pdfPath: string) {
+  return {
+    success: true,
+    resumeId,
+    pdfPath,
+    timestamp: new Date().toISOString(),
+  };
 }
 
 /**
@@ -139,7 +158,10 @@ async function generatePDF(cvData: CVFormData): Promise<Buffer> {
   doc.setFont("helvetica");
 
   // Helper function to wrap text to max line length
-  const wrapText = (text: string, maxLength: number = maxLineLength): string[] => {
+  const wrapText = (
+    text: string,
+    maxLength: number = maxLineLength
+  ): string[] => {
     if (!text || text.length <= maxLength) return [text || ""];
 
     const words = text.split(" ");
@@ -160,7 +182,13 @@ async function generatePDF(cvData: CVFormData): Promise<Buffer> {
   };
 
   // Helper function to add text with automatic wrapping
-  const addWrappedText = (text: string, x: number, y: number, fontSize: number, isBold: boolean = false): number => {
+  const addWrappedText = (
+    text: string,
+    x: number,
+    y: number,
+    fontSize: number,
+    isBold: boolean = false
+  ): number => {
     doc.setFontSize(fontSize);
     doc.setFont("helvetica", isBold ? "bold" : "normal");
 
@@ -176,7 +204,12 @@ async function generatePDF(cvData: CVFormData): Promise<Buffer> {
   };
 
   // Helper function to create bullet points from text with \n
-  const addBulletPoints = (text: string, x: number, y: number, fontSize: number): number => {
+  const addBulletPoints = (
+    text: string,
+    x: number,
+    y: number,
+    fontSize: number
+  ): number => {
     if (!text) return y;
 
     const bulletPoints = text
@@ -230,13 +263,20 @@ async function generatePDF(cvData: CVFormData): Promise<Buffer> {
     .filter((info) => info && info.trim())
     .join(" | ");
 
-  currentY = addWrappedText(contactInfo, margins.left, currentY, fontSize.content);
+  currentY = addWrappedText(
+    contactInfo,
+    margins.left,
+    currentY,
+    fontSize.content
+  );
   currentY += sectionSpacing;
 
   // 2. EXPERIENCE SECTION
   if (cvData.experiences && cvData.experiences.length > 0) {
     const experienceTitle =
-      cvData.experiences.length > 1 ? "EXPÉRIENCES PROFESSIONNELLES" : "EXPÉRIENCE PROFESSIONNELLE";
+      cvData.experiences.length > 1
+        ? "EXPÉRIENCES PROFESSIONNELLES"
+        : "EXPÉRIENCE PROFESSIONNELLE";
     currentY = addSectionHeader(experienceTitle, currentY);
 
     for (const exp of cvData.experiences) {
@@ -244,20 +284,40 @@ async function generatePDF(cvData: CVFormData): Promise<Buffer> {
 
       // Company and position
       const expHeader = `${exp.position} - ${exp.company}`;
-      currentY = addWrappedText(expHeader, margins.left, currentY, fontSize.content, true);
+      currentY = addWrappedText(
+        expHeader,
+        margins.left,
+        currentY,
+        fontSize.content,
+        true
+      );
 
       // Date and location
-      const dateLocation = [exp.startDate, exp.endDate || (exp.isCurrentPosition ? "Présent" : ""), exp.location]
+      const dateLocation = [
+        exp.startDate,
+        exp.endDate || (exp.isCurrentPosition ? "Présent" : ""),
+        exp.location,
+      ]
         .filter((info) => info && info.trim())
         .join(" | ");
 
       if (dateLocation) {
-        currentY = addWrappedText(dateLocation, margins.left, currentY, fontSize.small);
+        currentY = addWrappedText(
+          dateLocation,
+          margins.left,
+          currentY,
+          fontSize.small
+        );
       }
 
       // Description with bullet points
       if (exp.description) {
-        currentY = addBulletPoints(exp.description, margins.left + 5, currentY, fontSize.content);
+        currentY = addBulletPoints(
+          exp.description,
+          margins.left + 5,
+          currentY,
+          fontSize.content
+        );
       }
 
       currentY += lineHeight; // Space between experiences
@@ -268,7 +328,8 @@ async function generatePDF(cvData: CVFormData): Promise<Buffer> {
 
   // 3. EDUCATION SECTION
   if (cvData.education && cvData.education.length > 0) {
-    const educationTitle = cvData.education.length > 1 ? "FORMATIONS" : "FORMATION";
+    const educationTitle =
+      cvData.education.length > 1 ? "FORMATIONS" : "FORMATION";
     currentY = addSectionHeader(educationTitle, currentY);
 
     for (const edu of cvData.education) {
@@ -276,18 +337,36 @@ async function generatePDF(cvData: CVFormData): Promise<Buffer> {
 
       // Degree and institution
       const eduHeader = `${edu.degree} - ${edu.institution}`;
-      currentY = addWrappedText(eduHeader, margins.left, currentY, fontSize.content, true);
+      currentY = addWrappedText(
+        eduHeader,
+        margins.left,
+        currentY,
+        fontSize.content,
+        true
+      );
 
       // Field, dates
-      const eduDetails = [edu.field, edu.startDate, edu.endDate].filter((info) => info && info.trim()).join(" | ");
+      const eduDetails = [edu.field, edu.startDate, edu.endDate]
+        .filter((info) => info && info.trim())
+        .join(" | ");
 
       if (eduDetails) {
-        currentY = addWrappedText(eduDetails, margins.left, currentY, fontSize.small);
+        currentY = addWrappedText(
+          eduDetails,
+          margins.left,
+          currentY,
+          fontSize.small
+        );
       }
 
       // Description with bullet points if available
       if (edu.description) {
-        currentY = addBulletPoints(edu.description, margins.left + 5, currentY, fontSize.content);
+        currentY = addBulletPoints(
+          edu.description,
+          margins.left + 5,
+          currentY,
+          fontSize.content
+        );
       }
 
       currentY += lineHeight; // Space between education entries
@@ -295,6 +374,26 @@ async function generatePDF(cvData: CVFormData): Promise<Buffer> {
 
     currentY += sectionSpacing;
   }
+
+  /**
+   * Helper function: Groups skills by category from the form data.
+   */
+  const groupByCat = (skills?: CVFormData["skills"]) => {
+    if (!skills) return [];
+    const skillMap = skills.reduce((map, s) => {
+      // Use "Compétences Techniques" or "Autres" as default categories
+      const cat =
+        s.category === "technical"
+          ? "Compétences Techniques"
+          : s.category || "Autres";
+      map.set(cat, [...(map.get(cat) || []), s.name!]);
+      return map;
+    }, new Map<string, string[]>());
+
+    return Array.from(skillMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([cat, list]) => ({ cat: cat.toUpperCase(), list }));
+  };
 
   // 4. SKILLS SECTION
   if (cvData.skills && cvData.skills.length > 0) {
@@ -304,11 +403,22 @@ async function generatePDF(cvData: CVFormData): Promise<Buffer> {
 
     for (const { cat, list } of skillsByCategory) {
       // Category name
-      currentY = addWrappedText(cat + ":", margins.left, currentY, fontSize.content, true);
+      currentY = addWrappedText(
+        cat + ":",
+        margins.left,
+        currentY,
+        fontSize.content,
+        true
+      );
 
       // Skills list
       const skillsText = list.join(", ");
-      currentY = addWrappedText(skillsText, margins.left + 5, currentY, fontSize.content);
+      currentY = addWrappedText(
+        skillsText,
+        margins.left + 5,
+        currentY,
+        fontSize.content
+      );
       currentY += lineHeight; // Space between categories
     }
 
@@ -323,7 +433,12 @@ async function generatePDF(cvData: CVFormData): Promise<Buffer> {
       if (!lang.name) continue;
 
       const langText = `${lang.name}${lang.level ? ` (${lang.level})` : ""}`;
-      currentY = addWrappedText(langText, margins.left, currentY, fontSize.content);
+      currentY = addWrappedText(
+        langText,
+        margins.left,
+        currentY,
+        fontSize.content
+      );
     }
   }
 
@@ -331,20 +446,3 @@ async function generatePDF(cvData: CVFormData): Promise<Buffer> {
   const pdfData = doc.output("arraybuffer");
   return Buffer.from(pdfData);
 }
-
-/**
- * Groups skills by category from the form data.
- */
-const groupByCat = (skills?: CVFormData["skills"]) => {
-  if (!skills) return [];
-  const skillMap = skills.reduce((map, s) => {
-    // Use "Compétences Techniques" or "Autres" as default categories
-    const cat = s.category === "technical" ? "Compétences Techniques" : s.category || "Autres";
-    map.set(cat, [...(map.get(cat) || []), s.name!]);
-    return map;
-  }, new Map<string, string[]>());
-
-  return Array.from(skillMap.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([cat, list]) => ({ cat: cat.toUpperCase(), list }));
-};

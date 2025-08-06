@@ -49,17 +49,6 @@ export default function HomePage() {
     },
   ];
 
-  const learningObjectives = [
-    "Clean Code & SOLID",
-    "Design Patterns",
-    "Tests (Unit, Integration, E2E)",
-    "CI/CD avec Vercel",
-    "Git & Workflow",
-    "PostgreSQL & Supabase",
-    "APIs REST",
-    "Méthodologie Scrum",
-  ];
-
   return (
     <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50" data-testid="homepage">
 

@@ -76,7 +76,7 @@ describe("API POST /api/cv/complete-improve", () => {
     expect(res.status).toBe(500);
     expect(json.success).toBe(false);
     expect(json.error).toContain("Erreur lors de l'amélioration");
-    expect(json.details).toBe("Gemini Down");
+    expect(json.details).toBe("Service d'amélioration temporairement indisponible");
   });
 
   it("return 500 if Gemini return the invalid JSON response", async () => {

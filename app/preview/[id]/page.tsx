@@ -127,7 +127,7 @@ export default function PreviewPage() {
             <div className="flex items-center space-x-4">
               <Button
                 onClick={() => router.push("/dashboard")}
-                className="flex items-center space-x-2 px-4 py-2 text-white hover:text-white transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 text-white hover:text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
                 data-testid="back-button"
               >
                 <ArrowLeft className="w-4 h-4" />
@@ -183,8 +183,8 @@ export default function PreviewPage() {
         {/* Actions */}
         <div className="mt-6 flex justify-center space-x-4" data-testid="preview-actions">
           <Button
-            onClick={() => router.push("/dashboard")}
-            className="px-6 py-2 border border-gray-300 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={() => router.push('/dashboard')}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Créer un nouveau CV
           </Button>

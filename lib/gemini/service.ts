@@ -196,7 +196,7 @@ RETOURNE UNIQUEMENT LE JSON AMÉLIORÉ (aucun autre texte) :`;
   /**
    * Améliore du contenu spécifique (section par section)
    */
-  async improveCVContent(rawContent: string, section: string): Promise<string> {
+  async improveCVFormData(rawContent: string, section: string): Promise<string> {
     const prompt = `En tant qu'expert en rédaction de CV, réécris le contenu suivant pour le rendre plus professionnel, percutant et adapté au marché du travail français.
 
 Section: ${section}

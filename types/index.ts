@@ -28,20 +28,11 @@ export interface Resume {
   id: string
   user_id: string
   title: string
-  raw_content: CVContent
-  generated_content?: CVContent
+  raw_content: CVFormData
+  generated_content?: CVFormData
   status: 'draft' | 'generated' | 'published'
   created_at: string
   updated_at: string
-}
-
-// Structure du contenu du CV
-export interface CVContent {
-  personalInfo: PersonalInfo
-  experiences: Experience[]
-  education: Education[]
-  skills: Skill[]
-  languages?: Language[]
 }
 
 export interface PersonalInfo {

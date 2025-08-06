@@ -249,7 +249,7 @@ This is the final result.`;
     });
   });
 
-  describe("improveCVContent", () => {
+  describe("improveCVFormData", () => {
     it("should improve specific content section successfully", async () => {
       const improvedContent =
         "Développé et optimisé des applications web performantes";
@@ -257,7 +257,7 @@ This is the final result.`;
         text: improvedContent,
       });
 
-      const result = await service.improveCVContent(
+      const result = await service.improveCVFormData(
         "Worked on web applications",
         "experience"
       );
@@ -277,7 +277,7 @@ This is the final result.`;
       });
 
       await expect(
-        service.improveCVContent("content", "section")
+        service.improveCVFormData("content", "section")
       ).rejects.toThrow("Aucun contenu généré par Gemini");
     });
 
@@ -285,7 +285,7 @@ This is the final result.`;
       mockModels.generateContent.mockRejectedValue(new Error("Network error"));
 
       await expect(
-        service.improveCVContent("content", "section")
+        service.improveCVFormData("content", "section")
       ).rejects.toThrow("Impossible d'améliorer le contenu: Network error");
     });
   });

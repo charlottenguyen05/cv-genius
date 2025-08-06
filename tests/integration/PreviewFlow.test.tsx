@@ -70,7 +70,7 @@ describe("Preview Flow Integration Test", () => {
     user_id: "user-123",
     title: "CV Développeur Frontend",
     generated_content: "cv-files/resume-123.pdf",
-    created_at: "2023-12-01T10:30:00.000Z"
+    created_at: "2023-12-01T11:30:00.000Z"
   };
 
   beforeEach(() => {
@@ -125,7 +125,7 @@ describe("Preview Flow Integration Test", () => {
     // ÉTAPE 3: VÉRIFICATION DE L'INTERFACE UTILISATEUR
     expect(screen.getByTestId("resume-title")).toHaveTextContent("Votre CV Améliorée");
     expect(screen.getByTestId("resume-date")).toHaveTextContent(
-      "Généré le 1 décembre 2023 à 10:30"
+      "Généré le 1 décembre 2023 à 11:30"
     );
     expect(screen.getByTestId("back-button")).toBeInTheDocument();
     expect(screen.getByTestId("download-button")).toBeInTheDocument();
