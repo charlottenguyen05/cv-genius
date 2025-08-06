@@ -1,11 +1,5 @@
 {
   "buildCommand": "npm run build",
   "framework": "nextjs",
-  "installCommand": "npm install",
-  "env": {
-    "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
-    "GEMINI_API_KEY": "@gemini_api_key",
-    "NEXTAUTH_SECRET": "@nextauth_secret"
-  }
+  "installCommand": "npm install --include=dev"
 } 

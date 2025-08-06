@@ -103,6 +103,12 @@ function logFileReceived(file: File): void {
 async function ensureTmpDirectory(): Promise<void> {
   const tmpPath = getTmpDirectoryPath();
 
+  // In serverless environments, /tmp always exists, no need to create it
+  if (process.env.VERCEL === "1" || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    console.log("✅ Using system /tmp directory (serverless environment)");
+    return;
+  }
+
   try {
     await access(tmpPath);
     console.log("✅ tmp folder already exists");
@@ -149,13 +155,19 @@ function generateTempFilePath(): string {
   const tempFileName = `temp_cv_${Date.now()}_${Math.random()
     .toString(36)
     .slice(2, 9)}.pdf`;
-  return join(process.cwd(), "tmp", tempFileName);
+  return join(getTmpDirectoryPath(), tempFileName);
 }
 
 /**
- * Gets the tmp directory path
+ * Gets the tmp directory path - uses system /tmp for serverless environments
  */
 function getTmpDirectoryPath(): string {
+  // In serverless environments like Vercel, use the system /tmp directory
+  // which is the only writable location
+  if (process.env.VERCEL === "1" || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return "/tmp";
+  }
+  // For local development, use project's tmp directory
   return join(process.cwd(), "tmp");
 }
 
