@@ -17,7 +17,11 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { act } from "react";
 import userEvent from "@testing-library/user-event";
 import PreviewPage from "@/app/preview/[id]/page";
-import { getResumeById, getCurrentUser, getPdfPublicUrl } from "@/lib/supabase/client";
+import {
+  getResumeById,
+  getCurrentUser,
+  getPdfPublicUrl,
+} from "@/lib/supabase/client";
 
 const mockRouterPush = jest.fn();
 const mockParams = { id: "resume-123" };
@@ -35,26 +39,34 @@ jest.mock("@/lib/supabase/client", () => ({
   getCurrentUser: jest.fn(),
   getResumeById: jest.fn(),
   getPdfPublicUrl: jest.fn(),
-  
+
   // Mock the supabase object with auth methods
   supabase: {
     auth: {
       onAuthStateChange: jest.fn(() => ({
         data: {
           subscription: {
-            unsubscribe: jest.fn()
-          }
-        }
+            unsubscribe: jest.fn(),
+          },
+        },
       })),
-      getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
-    }
-  }
+      getUser: jest
+        .fn()
+        .mockResolvedValue({ data: { user: null }, error: null }),
+    },
+  },
 }));
 
 describe("Preview Flow Integration Test", () => {
-  const mockGetCurrentUser = getCurrentUser as jest.MockedFunction<typeof getCurrentUser>;
-  const mockGetResumeById = getResumeById as jest.MockedFunction<typeof getResumeById>;
-  const mockGetPdfPublicUrl = getPdfPublicUrl as jest.MockedFunction<typeof getPdfPublicUrl>;
+  const mockGetCurrentUser = getCurrentUser as jest.MockedFunction<
+    typeof getCurrentUser
+  >;
+  const mockGetResumeById = getResumeById as jest.MockedFunction<
+    typeof getResumeById
+  >;
+  const mockGetPdfPublicUrl = getPdfPublicUrl as jest.MockedFunction<
+    typeof getPdfPublicUrl
+  >;
 
   const mockUser = {
     id: "user-123",
@@ -70,7 +82,7 @@ describe("Preview Flow Integration Test", () => {
     user_id: "user-123",
     title: "CV Développeur Frontend",
     generated_content: "cv-files/resume-123.pdf",
-    created_at: "2023-12-01T11:30:00.000Z"
+    created_at: "2023-12-01T11:30:00.000Z",
   };
 
   beforeEach(() => {
@@ -97,7 +109,9 @@ describe("Preview Flow Integration Test", () => {
         setTimeout(() => resolve(mockResume), 100);
       });
     });
-    mockGetPdfPublicUrl.mockReturnValue("https://example.com/cv-files/resume-123.pdf");
+    mockGetPdfPublicUrl.mockReturnValue(
+      "https://example.com/cv-files/resume-123.pdf"
+    );
 
     const user = userEvent.setup();
 
@@ -123,7 +137,9 @@ describe("Preview Flow Integration Test", () => {
     expect(mockGetPdfPublicUrl).toHaveBeenCalledWith("cv-files/resume-123.pdf");
 
     // ÉTAPE 3: VÉRIFICATION DE L'INTERFACE UTILISATEUR
-    expect(screen.getByTestId("resume-title")).toHaveTextContent("Votre CV Améliorée");
+    expect(screen.getByTestId("resume-title")).toHaveTextContent(
+      "Votre CV Améliorée"
+    );
     expect(screen.getByTestId("resume-date")).toHaveTextContent(
       "Généré le 1 décembre 2023 à 11:30"
     );
@@ -176,7 +192,7 @@ describe("Preview Flow Integration Test", () => {
     // SETUP : Utilisateur authentifié mais CV appartenant à un autre utilisateur
     const unauthorizedResume = {
       ...mockResume,
-      user_id: "other-user-456" // CV appartenant à un autre utilisateur
+      user_id: "other-user-456", // CV appartenant à un autre utilisateur
     };
 
     mockGetCurrentUser.mockResolvedValue({ user: mockUser, error: null });
@@ -196,7 +212,9 @@ describe("Preview Flow Integration Test", () => {
     });
 
     // VÉRIFICATION DU MESSAGE D'ERREUR
-    expect(screen.getByText("Vous n'avez pas l'autorisation d'accéder à ce CV")).toBeInTheDocument();
+    expect(
+      screen.getByText("Vous n'avez pas l'autorisation d'accéder à ce CV")
+    ).toBeInTheDocument();
     expect(screen.getByText("Retour au dashboard")).toBeInTheDocument();
 
     // TEST DU BOUTON RETOUR DANS L'ÉTAT D'ERREUR
@@ -248,14 +266,17 @@ describe("Preview Flow Integration Test", () => {
     // car loadResume() retourne tôt avec un resumeId vide
     expect(screen.getByTestId("loading-state")).toBeInTheDocument();
     expect(screen.getByText("Chargement du CV...")).toBeInTheDocument();
-    
+
     // Vérifier que l'API n'est pas appelée avec un ID vide
     expect(mockGetResumeById).not.toHaveBeenCalled();
-    
+
     // Le composant devrait rester dans cet état
-    await waitFor(() => {
-      expect(screen.getByTestId("loading-state")).toBeInTheDocument();
-    }, { timeout: 1000 });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId("loading-state")).toBeInTheDocument();
+      },
+      { timeout: 1000 }
+    );
   });
 
   /**
@@ -276,9 +297,12 @@ describe("Preview Flow Integration Test", () => {
     });
 
     // ATTENDRE LE CHARGEMENT DU RÉSUMÉ
-    await waitFor(() => {
-      expect(screen.getByTestId("preview-page")).toBeInTheDocument();
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId("preview-page")).toBeInTheDocument();
+      },
+      { timeout: 2000 }
+    );
 
     // VÉRIFICATION DE L'ÉTAT DE CHARGEMENT DU PDF
     expect(screen.getByTestId("pdf-loading")).toBeInTheDocument();
@@ -296,7 +320,9 @@ describe("Preview Flow Integration Test", () => {
         setTimeout(() => resolve(mockResume), 100);
       });
     });
-    mockGetPdfPublicUrl.mockReturnValue("https://example.com/cv-files/resume-123.pdf");
+    mockGetPdfPublicUrl.mockReturnValue(
+      "https://example.com/cv-files/resume-123.pdf"
+    );
 
     const user = userEvent.setup();
 
@@ -305,9 +331,12 @@ describe("Preview Flow Integration Test", () => {
     });
 
     // ATTENDRE LE CHARGEMENT COMPLET
-    await waitFor(() => {
-      expect(screen.getByTestId("preview-actions")).toBeInTheDocument();
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId("preview-actions")).toBeInTheDocument();
+      },
+      { timeout: 2000 }
+    );
 
     // TEST DES ACTIONS SECONDAIRES
     const createNewButton = screen.getByText("Créer un nouveau CV");

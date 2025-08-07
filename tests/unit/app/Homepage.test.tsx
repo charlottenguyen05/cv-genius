@@ -83,15 +83,19 @@ describe("HomePage", () => {
 
       // Hero section
       expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
-      
+
       // Features section
-      expect(screen.getByText("Pourquoi choisir CV Genius ?")).toBeInTheDocument();
-      
+      expect(
+        screen.getByText("Pourquoi choisir CV Genius ?")
+      ).toBeInTheDocument();
+
       // Tech stack section
       expect(screen.getByText("Technologies Modernes")).toBeInTheDocument();
-      
+
       // CTA section
-      expect(screen.getByText("Prêt à créer votre CV parfait ?")).toBeInTheDocument();
+      expect(
+        screen.getByText("Prêt à créer votre CV parfait ?")
+      ).toBeInTheDocument();
     });
   });
 
@@ -106,7 +110,9 @@ describe("HomePage", () => {
       render(<HomePage />);
 
       expect(screen.getByTestId("homepage")).toBeInTheDocument();
-      expect(screen.getByText(/Transformez votre CV avec l'/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Transformez votre CV avec l'/)
+      ).toBeInTheDocument();
     });
 
     it("should show project badge during loading", () => {
@@ -118,7 +124,7 @@ describe("HomePage", () => {
 
       render(<HomePage />);
 
-      expect(screen.getByText("Projet pédagogique - En développement")).toBeInTheDocument();
+      expect(screen.getByText("Projet pédagogique")).toBeInTheDocument();
       expect(screen.getAllByTestId("sparkles-icon")).toHaveLength(4); // Badge, Feature 0, Tech 2, CTA
     });
   });
@@ -134,7 +140,9 @@ describe("HomePage", () => {
       render(<HomePage />);
 
       expect(screen.getByTestId("homepage")).toBeInTheDocument();
-      expect(screen.getByText(/Transformez votre CV avec l'/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Transformez votre CV avec l'/)
+      ).toBeInTheDocument();
     });
   });
 
@@ -150,10 +158,12 @@ describe("HomePage", () => {
     it("should render hero section with correct structure and content", () => {
       render(<HomePage />);
 
-      const heroSection = screen.getByRole("heading", { level: 1 }).closest("section");
+      const heroSection = screen
+        .getByRole("heading", { level: 1 })
+        .closest("section");
       expect(heroSection).toHaveClass("py-20", "px-4", "sm:px-6", "lg:px-8");
 
-      const badge = screen.getByText("Projet pédagogique - En développement");
+      const badge = screen.getByText("Projet pédagogique");
       expect(badge).toHaveClass(
         "inline-flex",
         "items-center",
@@ -176,7 +186,9 @@ describe("HomePage", () => {
         "text-gray-900"
       );
 
-      const gradientSpan = within(mainHeading).getByText("Intelligence Artificielle");
+      const gradientSpan = within(mainHeading).getByText(
+        "Intelligence Artificielle"
+      );
       expect(gradientSpan).toHaveClass(
         "text-transparent",
         "bg-clip-text",
@@ -259,7 +271,8 @@ describe("HomePage", () => {
     it("should render CTA buttons container with correct layout", () => {
       render(<HomePage />);
 
-      const buttonsContainer = screen.getByTestId("get-started-cta").parentElement;
+      const buttonsContainer =
+        screen.getByTestId("get-started-cta").parentElement;
       expect(buttonsContainer).toHaveClass(
         "flex",
         "flex-col",
@@ -335,10 +348,14 @@ describe("HomePage", () => {
     it("should render features section with correct structure", () => {
       render(<HomePage />);
 
-      const featuresSection = screen.getByText("Pourquoi choisir CV Genius ?").closest("section");
+      const featuresSection = screen
+        .getByText("Pourquoi choisir CV Genius ?")
+        .closest("section");
       expect(featuresSection).toHaveClass("py-20", "bg-white");
 
-      const featuresContainer = screen.getByText("Pourquoi choisir CV Genius ?").closest("div");
+      const featuresContainer = screen
+        .getByText("Pourquoi choisir CV Genius ?")
+        .closest("div");
       expect(featuresContainer).toHaveClass("text-center", "mb-16");
     });
 
@@ -360,7 +377,9 @@ describe("HomePage", () => {
         "mb-4"
       );
       expect(within(feature0).getByText("IA Générative")).toBeInTheDocument();
-      expect(within(feature0).getByText(/Transformez vos idées brouillonnes/)).toBeInTheDocument();
+      expect(
+        within(feature0).getByText(/Transformez vos idées brouillonnes/)
+      ).toBeInTheDocument();
 
       // Test feature 1 - Templates Modernes
       const feature1 = screen.getByTestId("feature-1");
@@ -370,8 +389,12 @@ describe("HomePage", () => {
         "text-primary-600",
         "mb-4"
       );
-      expect(within(feature1).getByText("Templates Modernes")).toBeInTheDocument();
-      expect(within(feature1).getByText(/Choisissez parmi des modèles optimisés/)).toBeInTheDocument();
+      expect(
+        within(feature1).getByText("Templates Modernes")
+      ).toBeInTheDocument();
+      expect(
+        within(feature1).getByText(/Choisissez parmi des modèles optimisés/)
+      ).toBeInTheDocument();
 
       // Test feature 2 - Génération Rapide
       const feature2 = screen.getByTestId("feature-2");
@@ -381,8 +404,12 @@ describe("HomePage", () => {
         "text-primary-600",
         "mb-4"
       );
-      expect(within(feature2).getByText("Génération Rapide")).toBeInTheDocument();
-      expect(within(feature2).getByText(/Obtenez votre CV optimisé/)).toBeInTheDocument();
+      expect(
+        within(feature2).getByText("Génération Rapide")
+      ).toBeInTheDocument();
+      expect(
+        within(feature2).getByText(/Obtenez votre CV optimisé/)
+      ).toBeInTheDocument();
     });
 
     it("should render features grid with correct layout", () => {
@@ -395,7 +422,10 @@ describe("HomePage", () => {
     it("should render feature headings with correct styling", () => {
       render(<HomePage />);
 
-      const featureTitle = within(screen.getByTestId("feature-0")).getByRole("heading", { level: 3 });
+      const featureTitle = within(screen.getByTestId("feature-0")).getByRole(
+        "heading",
+        { level: 3 }
+      );
       expect(featureTitle).toHaveClass(
         "text-xl",
         "font-semibold",
@@ -417,7 +447,9 @@ describe("HomePage", () => {
     it("should render tech stack section with correct structure", () => {
       render(<HomePage />);
 
-      const techSection = screen.getByText("Technologies Modernes").closest("section");
+      const techSection = screen
+        .getByText("Technologies Modernes")
+        .closest("section");
       expect(techSection).toHaveClass("py-20", "bg-gray-50");
     });
 
@@ -442,7 +474,9 @@ describe("HomePage", () => {
         "mb-3"
       );
       expect(within(tech0).getByText("Next.js 14")).toBeInTheDocument();
-      expect(within(tech0).getByText("App Router + Server Components")).toBeInTheDocument();
+      expect(
+        within(tech0).getByText("App Router + Server Components")
+      ).toBeInTheDocument();
 
       // Test tech 1 - Supabase
       const tech1 = screen.getByTestId("tech-1");
@@ -453,7 +487,9 @@ describe("HomePage", () => {
         "mb-3"
       );
       expect(within(tech1).getByText("Supabase")).toBeInTheDocument();
-      expect(within(tech1).getByText("Auth + Base de données temps réel")).toBeInTheDocument();
+      expect(
+        within(tech1).getByText("Auth + Base de données temps réel")
+      ).toBeInTheDocument();
 
       // Test tech 2 - Gemini AI
       const tech2 = screen.getByTestId("tech-2");
@@ -464,7 +500,9 @@ describe("HomePage", () => {
         "mb-3"
       );
       expect(within(tech2).getByText("Gemini AI")).toBeInTheDocument();
-      expect(within(tech2).getByText("Intelligence artificielle avancée")).toBeInTheDocument();
+      expect(
+        within(tech2).getByText("Intelligence artificielle avancée")
+      ).toBeInTheDocument();
 
       // Test tech 3 - TypeScript
       const tech3 = screen.getByTestId("tech-3");
@@ -475,7 +513,9 @@ describe("HomePage", () => {
         "mb-3"
       );
       expect(within(tech3).getByText("TypeScript")).toBeInTheDocument();
-      expect(within(tech3).getByText("Développement type-safe")).toBeInTheDocument();
+      expect(
+        within(tech3).getByText("Développement type-safe")
+      ).toBeInTheDocument();
     });
 
     it("should render tech stack grid with correct layout", () => {
@@ -493,14 +533,19 @@ describe("HomePage", () => {
     it("should render tech headings with correct styling", () => {
       render(<HomePage />);
 
-      const techTitle = within(screen.getByTestId("tech-0")).getByRole("heading", { level: 4 });
+      const techTitle = within(screen.getByTestId("tech-0")).getByRole(
+        "heading",
+        { level: 4 }
+      );
       expect(techTitle).toHaveClass("font-semibold", "text-gray-900", "mb-2");
     });
 
     it("should render tech descriptions with correct styling", () => {
       render(<HomePage />);
 
-      const techDescription = within(screen.getByTestId("tech-0")).getByText("App Router + Server Components");
+      const techDescription = within(screen.getByTestId("tech-0")).getByText(
+        "App Router + Server Components"
+      );
       expect(techDescription).toHaveClass("text-sm", "text-gray-600");
     });
   });
@@ -517,7 +562,9 @@ describe("HomePage", () => {
     it("should render CTA section with correct structure and styling", () => {
       render(<HomePage />);
 
-      const ctaSection = screen.getByText("Prêt à créer votre CV parfait ?").closest("section");
+      const ctaSection = screen
+        .getByText("Prêt à créer votre CV parfait ?")
+        .closest("section");
       expect(ctaSection).toHaveClass(
         "py-20",
         "bg-gradient-to-r",
@@ -525,7 +572,9 @@ describe("HomePage", () => {
         "to-purple-600"
       );
 
-      const ctaContainer = screen.getByText("Prêt à créer votre CV parfait ?").closest("div");
+      const ctaContainer = screen
+        .getByText("Prêt à créer votre CV parfait ?")
+        .closest("div");
       expect(ctaContainer).toHaveClass(
         "max-w-4xl",
         "mx-auto",
@@ -552,7 +601,9 @@ describe("HomePage", () => {
     it("should render CTA description with correct styling", () => {
       render(<HomePage />);
 
-      const ctaDescription = screen.getByText(/Rejoignez les utilisateurs qui ont déjà transformé/);
+      const ctaDescription = screen.getByText(
+        /Rejoignez les utilisateurs qui ont déjà transformé/
+      );
       expect(ctaDescription).toHaveClass(
         "text-xl",
         "text-blue-100",
@@ -567,18 +618,18 @@ describe("HomePage", () => {
     const originalEnv = process.env.NODE_ENV;
 
     afterEach(() => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
+      Object.defineProperty(process.env, "NODE_ENV", {
         value: originalEnv,
-        writable: true
+        writable: true,
       });
     });
 
     it("should show development badge when in development mode", () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
+      Object.defineProperty(process.env, "NODE_ENV", {
         value: "development",
-        writable: true
+        writable: true,
       });
-      
+
       mockUseUserStatus.mockReturnValue({
         user: null,
         isLoading: false,
@@ -601,11 +652,11 @@ describe("HomePage", () => {
     });
 
     it("should not show development badge in production", () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
+      Object.defineProperty(process.env, "NODE_ENV", {
         value: "production",
-        writable: true
+        writable: true,
       });
-      
+
       mockUseUserStatus.mockReturnValue({
         user: null,
         isLoading: false,
@@ -614,15 +665,17 @@ describe("HomePage", () => {
 
       render(<HomePage />);
 
-      expect(screen.queryByText("🚧 Mode développement")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("🚧 Mode développement")
+      ).not.toBeInTheDocument();
     });
 
     it("should not show development badge when NODE_ENV is undefined", () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
+      Object.defineProperty(process.env, "NODE_ENV", {
         value: undefined,
-        writable: true
+        writable: true,
       });
-      
+
       mockUseUserStatus.mockReturnValue({
         user: null,
         isLoading: false,
@@ -631,7 +684,9 @@ describe("HomePage", () => {
 
       render(<HomePage />);
 
-      expect(screen.queryByText("🚧 Mode développement")).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("🚧 Mode développement")
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -654,7 +709,9 @@ describe("HomePage", () => {
       expect(h2Elements).toHaveLength(3);
       expect(h2Elements[0]).toHaveTextContent("Pourquoi choisir CV Genius ?");
       expect(h2Elements[1]).toHaveTextContent("Technologies Modernes");
-      expect(h2Elements[2]).toHaveTextContent("Prêt à créer votre CV parfait ?");
+      expect(h2Elements[2]).toHaveTextContent(
+        "Prêt à créer votre CV parfait ?"
+      );
 
       const h3Elements = screen.getAllByRole("heading", { level: 3 });
       expect(h3Elements).toHaveLength(3); // One for each feature
@@ -672,18 +729,32 @@ describe("HomePage", () => {
       });
 
       // Test specific links by data-testid to avoid conflicts
-      expect(screen.getByTestId("demo-link")).toHaveAttribute("href", "/dashboard");
-      expect(screen.getByTestId("get-started-cta")).toHaveAttribute("href", "/register");
+      expect(screen.getByTestId("demo-link")).toHaveAttribute(
+        "href",
+        "/dashboard"
+      );
+      expect(screen.getByTestId("get-started-cta")).toHaveAttribute(
+        "href",
+        "/register"
+      );
     });
 
     it("should render semantic HTML sections", () => {
       render(<HomePage />);
 
       // Check for sections by finding elements with section role or by content
-      const heroSection = screen.getByRole("heading", { level: 1 }).closest("section");
-      const featuresSection = screen.getByText("Pourquoi choisir CV Genius ?").closest("section");
-      const techSection = screen.getByText("Technologies Modernes").closest("section");
-      const ctaSection = screen.getByText("Prêt à créer votre CV parfait ?").closest("section");
+      const heroSection = screen
+        .getByRole("heading", { level: 1 })
+        .closest("section");
+      const featuresSection = screen
+        .getByText("Pourquoi choisir CV Genius ?")
+        .closest("section");
+      const techSection = screen
+        .getByText("Technologies Modernes")
+        .closest("section");
+      const ctaSection = screen
+        .getByText("Prêt à créer votre CV parfait ?")
+        .closest("section");
 
       expect(heroSection).toBeInTheDocument();
       expect(featuresSection).toBeInTheDocument();
@@ -773,7 +844,9 @@ describe("HomePage", () => {
       // Verify each feature has required elements
       featureCards.forEach((card, index) => {
         expect(card).toHaveAttribute("data-testid", `feature-${index}`);
-        expect(within(card).getByRole("heading", { level: 3 })).toBeInTheDocument();
+        expect(
+          within(card).getByRole("heading", { level: 3 })
+        ).toBeInTheDocument();
       });
     });
 
@@ -786,7 +859,9 @@ describe("HomePage", () => {
       // Verify each tech has required elements
       techCards.forEach((card, index) => {
         expect(card).toHaveAttribute("data-testid", `tech-${index}`);
-        expect(within(card).getByRole("heading", { level: 4 })).toBeInTheDocument();
+        expect(
+          within(card).getByRole("heading", { level: 4 })
+        ).toBeInTheDocument();
       });
     });
   });

@@ -10,22 +10,93 @@ from http.server import BaseHTTPRequestHandler
 import sys
 from pathlib import Path
 
-# Add scripts directory to path to import our parser
-sys.path.append(str(Path(__file__).parent.parent / "scripts"))
+# Import parser directly - copy the class here for Vercel deployment
+import re
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 try:
-    from pdf_parser_improved import ImprovedCVParser
+    import pdfplumber
 except ImportError:
-    # Fallback if import fails
-    class ImprovedCVParser:
-        def parse_cv(self, pdf_path):
-            return {
-                "personalInfo": {},
-                "experiences": [],
-                "education": [],
-                "skills": [],
-                "languages": []
-            }
+    pdfplumber = None
+
+class ImprovedCVParser:
+    """Parser CV amélioré avec détection de sections optimisée"""
+    
+    def __init__(self):
+        self.email_pattern = re.compile(r'\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b')
+        self.phone_patterns = [
+            re.compile(r'(?:\+33|0)\s?[1-9](?:[\s.-]?\d{2}){4}'),  # Français
+            re.compile(r'\+?(?:\d{1,3}[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}'),  # International
+        ]
+        self.linkedin_pattern = re.compile(r'(?:https?://)?(?:www\.)?(?:linkedin\.com/in/|in/)[\w-]+/?', re.IGNORECASE)
+        self.github_pattern = re.compile(r'(?:https?://)?(?:www\.)?github\.com/[\w-]+/?', re.IGNORECASE)
+
+    def extract_text_from_pdf(self, pdf_path: str) -> str:
+        """Extrait le texte d'un PDF avec pdfplumber"""
+        if not pdfplumber:
+            return ""
+        try:
+            with pdfplumber.open(pdf_path) as pdf:
+                text = ""
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
+                return text.strip()
+        except Exception as e:
+            logger.error(f"Erreur extraction PDF: {e}")
+            return ""
+
+    def extract_personal_info(self, text: str) -> dict:
+        """Extrait les informations personnelles"""
+        info = {}
+        lines = text.split('\n')
+        
+        if lines:
+            first_line = lines[0].strip()
+            if first_line and not '@' in first_line and not '+' in first_line:
+                info['name'] = first_line
+        
+        email_match = self.email_pattern.search(text)
+        if email_match:
+            info['email'] = email_match.group()
+        
+        for pattern in self.phone_patterns:
+            phone_match = pattern.search(text)
+            if phone_match:
+                info['phone'] = phone_match.group()
+                break
+                
+        return info
+
+    def parse_cv(self, pdf_path: str) -> dict:
+        """Parse complet d'un CV PDF"""
+        if not pdfplumber:
+            return self._empty_cv_data()
+            
+        text = self.extract_text_from_pdf(pdf_path)
+        if not text:
+            return self._empty_cv_data()
+        
+        return {
+            "personalInfo": self.extract_personal_info(text),
+            "experiences": [],
+            "education": [],
+            "skills": [],
+            "languages": []
+        }
+
+    def _empty_cv_data(self) -> dict:
+        return {
+            "personalInfo": {},
+            "experiences": [],
+            "education": [],
+            "skills": [],
+            "languages": []
+        }
 
 class handler(BaseHTTPRequestHandler):
     def do_POST(self):

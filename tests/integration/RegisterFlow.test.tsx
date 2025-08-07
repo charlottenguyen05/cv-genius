@@ -9,23 +9,25 @@ jest.mock("@/lib/supabase/client", () => ({
   // Mock individual functions
   signUp: jest.fn(),
   getCurrentUser: jest.fn().mockResolvedValue({ user: null, error: null }),
-  
+
   // Mock the supabase object with auth methods
   supabase: {
     auth: {
       onAuthStateChange: jest.fn(() => ({
         data: {
           subscription: {
-            unsubscribe: jest.fn()
-          }
-        }
+            unsubscribe: jest.fn(),
+          },
+        },
       })),
-      getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      getUser: jest
+        .fn()
+        .mockResolvedValue({ data: { user: null }, error: null }),
       signUp: jest.fn(),
       signInWithPassword: jest.fn(),
-      signOut: jest.fn()
-    }
-  }
+      signOut: jest.fn(),
+    },
+  },
 }));
 
 describe("Register flow integration test", () => {
@@ -79,12 +81,17 @@ describe("Register flow integration test", () => {
     expect(button).toBeEnabled();
 
     // ACT: SIMULATE USER TYPING
-    await user.type(screen.getByTestId("email-input"), "nguyen.nhi@example.com");
+    await user.type(
+      screen.getByTestId("email-input"),
+      "nguyen.nhi@example.com"
+    );
     await user.type(screen.getByTestId("password-input"), "Motdepasse123");
     await user.type(screen.getByTestId("cfpassword-input"), "Motdepasse123");
 
     // ASSERT: TEST VALUES HOLDS BY INPUT
-    expect(screen.getByTestId("email-input")).toHaveValue("nguyen.nhi@example.com");
+    expect(screen.getByTestId("email-input")).toHaveValue(
+      "nguyen.nhi@example.com"
+    );
     expect(screen.getByTestId("password-input")).toHaveValue("Motdepasse123");
     expect(screen.getByTestId("cfpassword-input")).toHaveValue("Motdepasse123");
     screen.getAllByRole("listitem").forEach((li) => {
@@ -136,21 +143,26 @@ describe("Register flow integration test", () => {
 
     // SIMULATION DU FLUX AVEC ERREUR - password doesn't meet criteria
     const button = screen.getByRole("button");
-    await user.type(screen.getByTestId("email-input"), "nguyen.wrong@example.com");
+    await user.type(
+      screen.getByTestId("email-input"),
+      "nguyen.wrong@example.com"
+    );
     await user.type(screen.getByTestId("password-input"), "wrongpassword"); // missing uppercase and number
     await user.type(screen.getByTestId("cfpassword-input"), "wrongpassword");
-    
+
     // Wait for all form updates to complete
     await waitFor(() => {
       // Verify password requirements are shown correctly
       expect(screen.getByText("✓ Une majuscule")).toHaveClass("text-red-500");
       expect(screen.getByText("✓ Un chiffre")).toHaveClass("text-red-500");
       expect(screen.getByText("✓ Une minuscule")).toHaveClass("text-green-600");
-      expect(screen.getByText("✓ Au moins 8 caractères")).toHaveClass("text-green-600");
+      expect(screen.getByText("✓ Au moins 8 caractères")).toHaveClass(
+        "text-green-600"
+      );
     });
 
     // The button should be disabled due to password not meeting criteria
-    // Note: In a real implementation this would be disabled, but if not implemented, 
+    // Note: In a real implementation this would be disabled, but if not implemented,
     // at least the form validation should prevent API calls
     await user.click(button);
 
@@ -170,9 +182,11 @@ describe("Register flow integration test", () => {
     });
 
     const button = screen.getByRole("button");
-    await user.type(screen.getByTestId("password-input"), "Nic123fs");
-    await user.type(screen.getByTestId("cfpassword-input"), "134s5df");
-    await user.click(button);
+    await act(async () => {
+      await user.type(screen.getByTestId("password-input"), "Nic123fs");
+      await user.type(screen.getByTestId("cfpassword-input"), "134s5df");
+      await user.click(button);
+    });
 
     expect(mockSignUp).not.toHaveBeenCalled();
   });

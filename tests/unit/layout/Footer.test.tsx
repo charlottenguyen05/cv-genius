@@ -54,7 +54,9 @@ describe("Footer Component", () => {
   describe("copyright section", () => {
     it("should display the copyright text", () => {
       expect(
-        screen.getByText("© 2024 CV Genius. Projet pédagogique - Tous droits réservés.")
+        screen.getByText(
+          "© 2024 CV Genius. Projet pédagogique - Tous droits réservés."
+        )
       ).toBeInTheDocument();
     });
 
@@ -80,7 +82,7 @@ describe("Footer Component", () => {
     it("should have responsive layout classes", () => {
       const mainContainer = screen.getByRole("contentinfo").firstChild;
       expect(mainContainer).toHaveClass("max-w-7xl", "mx-auto");
-      
+
       const flexContainer = mainContainer?.firstChild;
       expect(flexContainer).toHaveClass(
         "flex",
@@ -99,7 +101,7 @@ describe("Footer Component", () => {
 
     it("should have all links accessible by role", () => {
       const links = screen.getAllByRole("link");
-      expect(links).toHaveLength(5); // 5 navigation links
+      expect(links).toHaveLength(6); // CV Genius logo link + 5 navigation links
     });
 
     it("should have proper link text for screen readers", () => {
@@ -109,4 +111,4 @@ describe("Footer Component", () => {
       });
     });
   });
-}); 
+});
