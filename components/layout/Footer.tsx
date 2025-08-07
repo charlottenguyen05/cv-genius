@@ -1,6 +1,6 @@
-import React from 'react'
-import { FileText } from 'lucide-react'
-import Link from 'next/link'
+import React from "react";
+import { FileText } from "lucide-react";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -8,8 +8,10 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center space-x-3 mb-4 md:mb-0">
-            <FileText className="w-6 h-6" />
-            <span className="text-lg font-semibold">CV Genius</span>
+            <Link href="/" className="flex items-center space-x-3">
+              <FileText className="w-6 h-6" />
+              <span className="text-lg font-semibold">CV Genius</span>
+            </Link>
           </div>
 
           <div className="flex space-x-6">
@@ -47,5 +49,5 @@ export default function Footer() {
         </div>
       </div>
     </footer>
-  )
-} 
+  );
+}

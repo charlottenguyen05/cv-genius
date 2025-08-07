@@ -11,7 +11,11 @@ import FileUploadSection from "@/components/dashboard/FileUploadSection";
 import CVFormSections from "@/components/dashboard/CVFormSections";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { storeCVFormData, getCVFormData, clearCVFormData } from "@/lib/utils/localStorage";
+import {
+  storeCVFormData,
+  getCVFormData,
+  clearCVFormData,
+} from "@/lib/utils/localStorage";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -98,13 +102,24 @@ export default function DashboardPage() {
   };
 
   // Fonction appelée quand la génération est terminée
-  const handleGenerationComplete = (pdfBlob: Blob, filename: string, resumeId?: string) => {
-    console.log("handleGenerationComplete called with:", { filename, resumeId, hasPdfBlob: pdfBlob.size > 0 });
+  const handleGenerationComplete = (
+    pdfBlob: Blob,
+    filename: string,
+    resumeId?: string
+  ) => {
+    console.log("handleGenerationComplete called with:", {
+      filename,
+      resumeId,
+      hasPdfBlob: pdfBlob.size > 0,
+    });
 
     if (resumeId) {
       setGeneratedCvId(resumeId);
       setIsGenerationComplete(true);
-      console.log("Generation complete state updated:", { generatedCvId: resumeId, isGenerationComplete: true });
+      console.log("Generation complete state updated:", {
+        generatedCvId: resumeId,
+        isGenerationComplete: true,
+      });
     }
 
     // Afficher le toast de succès
@@ -117,20 +132,34 @@ export default function DashboardPage() {
         <div className="bg-white rounded-lg shadow-sm">
           <div className="px-6 py-8">
             <div className="mb-8" data-testid="dashboard-header">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2" data-testid="dashboard-title">
+              <h1
+                className="text-3xl font-bold text-gray-900 mb-2"
+                data-testid="dashboard-title"
+              >
                 Améliorer votre CV avec l'IA
               </h1>
               <p className="text-gray-600" data-testid="dashboard-subtitle">
-                Téléchargez votre CV et complétez les informations pour l'améliorer avec l'intelligence artificielle.
+                Téléchargez votre CV et complétez les informations pour
+                l'améliorer avec l'intelligence artificielle.
               </p>
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg" data-testid="info-banner">
-                <p className="text-blue-800 font-medium" data-testid="info-banner-title">
+              <div
+                className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg"
+                data-testid="info-banner"
+              >
+                <p
+                  className="text-blue-800 font-medium"
+                  data-testid="info-banner-title"
+                >
                   🤖 Nouveau flow avec modal et prévisualisation
                 </p>
-                <p className="text-blue-600 text-sm mt-1" data-testid="info-banner-description">
-                  Une fois le formulaire complété, cliquez sur "Générer le CV" pour voir l'amélioration par IA en temps
-                  réel. Votre CV sera automatiquement sauvegardé et vous pourrez le prévisualiser directement dans le
-                  navigateur.
+                <p
+                  className="text-blue-600 text-sm mt-1"
+                  data-testid="info-banner-description"
+                >
+                  Une fois le formulaire complété, cliquez sur "Générer le CV"
+                  pour voir l'amélioration par IA en temps réel. Votre CV sera
+                  automatiquement sauvegardé et vous pourrez le prévisualiser
+                  directement dans le navigateur.
                 </p>
               </div>
               {parsedData && (
@@ -138,18 +167,29 @@ export default function DashboardPage() {
                   className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg"
                   data-testid="parsing-success-banner"
                 >
-                  <p className="text-green-800 font-medium" data-testid="parsing-success-title">
+                  <p
+                    className="text-green-800 font-medium"
+                    data-testid="parsing-success-title"
+                  >
                     ✅ CV analysé avec succès
                   </p>
-                  <p className="text-green-600 text-sm mt-1" data-testid="parsing-success-description">
-                    Les données de votre CV ont été extraites et pré-remplies dans le formulaire. Vous pouvez les
-                    modifier avant de générer la version améliorée.
+                  <p
+                    className="text-green-600 text-sm mt-1"
+                    data-testid="parsing-success-description"
+                  >
+                    Les données de votre CV ont été extraites et pré-remplies
+                    dans le formulaire. Vous pouvez les modifier avant de
+                    générer la version améliorée.
                   </p>
                 </div>
               )}
             </div>
 
-            <form onSubmit={onSubmit} className="space-y-8" data-testid="dashboard-content">
+            <form
+              onSubmit={onSubmit}
+              className="space-y-8"
+              data-testid="dashboard-content"
+            >
               {/* Section Upload */}
               <FileUploadSection
                 uploadedFile={uploadedFile}
@@ -164,37 +204,44 @@ export default function DashboardPage() {
 
               {/* Sections du CV */}
               <div data-testid="cv-form-wrapper">
-                              <CVFormSections
-                formData={formData}
-                updatePersonalInfo={updatePersonalInfo}
-                experienceHandlers={{
-                  add: addExperience,
-                  update: updateExperience,
-                  remove: removeExperience
-                }}
-                educationHandlers={{
-                  add: addEducation,
-                  update: updateEducation,
-                  remove: removeEducation
-                }}
-                skillHandlers={{
-                  add: addSkill,
-                  update: updateSkill,
-                  remove: removeSkill
-                }}
-                languageHandlers={{
-                  add: addLanguage,
-                  update: updateLanguage,
-                  remove: removeLanguage
-                }}
-              />
+                <CVFormSections
+                  formData={formData}
+                  updatePersonalInfo={updatePersonalInfo}
+                  experienceHandlers={{
+                    add: addExperience,
+                    update: updateExperience,
+                    remove: removeExperience,
+                  }}
+                  educationHandlers={{
+                    add: addEducation,
+                    update: updateEducation,
+                    remove: removeEducation,
+                  }}
+                  skillHandlers={{
+                    add: addSkill,
+                    update: updateSkill,
+                    remove: removeSkill,
+                  }}
+                  languageHandlers={{
+                    add: addLanguage,
+                    update: updateLanguage,
+                    remove: removeLanguage,
+                  }}
+                />
               </div>
 
               {/* Bouton de génération */}
-              <div className="flex justify-center pt-8" data-testid="submit-section">
+              <div
+                className="flex justify-center pt-8"
+                data-testid="submit-section"
+              >
                 <Button
                   type="submit"
-                  disabled={isSubmitting || !formData.personalInfo.name || !formData.personalInfo.email}
+                  disabled={
+                    isSubmitting ||
+                    !formData.personalInfo.name ||
+                    !formData.personalInfo.email
+                  }
                   className="px-8 py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   data-testid="generate-cv-button"
                 >
@@ -204,10 +251,14 @@ export default function DashboardPage() {
                         className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"
                         data-testid="loading-spinner"
                       ></div>
-                      <span data-testid="loading-text">Génération en cours...</span>
+                      <span data-testid="loading-text">
+                        Génération en cours...
+                      </span>
                     </>
                   ) : (
-                    <span data-testid="generate-text">🚀 Générer le CV avec IA</span>
+                    <span data-testid="generate-text">
+                      🚀 Générer le CV avec IA
+                    </span>
                   )}
                 </Button>
               </div>
@@ -225,7 +276,9 @@ export default function DashboardPage() {
                       <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="text-2xl">✅</span>
                       </div>
-                      <h3 className="text-xl font-semibold text-green-800 mb-2">CV généré avec succès !</h3>
+                      <h3 className="text-xl font-semibold text-green-800 mb-2">
+                        CV généré avec succès !
+                      </h3>
                       <p className="text-green-700 mb-4">
                         Votre CV a été créé et est prêt à être consulté !
                       </p>
@@ -264,13 +317,29 @@ export default function DashboardPage() {
       />
 
       {/* Toast de succès */}
-      {showToast && <Toast message="CV généré avec succès!" type="success" onClose={() => setShowToast(false)} />}
+      {showToast && (
+        <Toast
+          message="CV généré avec succès!"
+          type="success"
+          onClose={() => setShowToast(false)}
+        />
+      )}
 
       {/* Toast d'erreur */}
-      {error && <Toast message={error} type="error" onClose={() => setShowToast(false)} />}
+      {error && (
+        <Toast
+          message={error}
+          type="error"
+          onClose={() => setShowToast(false)}
+        />
+      )}
 
       {/* Pop-up d'authentification */}
-      <AuthPopUp isOpen={showCard} onClose={() => setShowCard(false)} formData={formData} />
+      <AuthPopUp
+        isOpen={showCard}
+        onClose={() => setShowCard(false)}
+        formData={formData}
+      />
     </div>
   );
 }

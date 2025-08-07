@@ -200,7 +200,10 @@ function logParsingSuccess(formattedData: CVFormData): void {
 /**
  * Creates success response
  */
-function createSuccessResponse(formattedData: CVFormData, rawData: any): NextResponse {
+function createSuccessResponse(
+  formattedData: CVFormData,
+  rawData: any
+): NextResponse {
   return NextResponse.json({
     success: true,
     parsedData: formattedData,
@@ -214,7 +217,8 @@ function createSuccessResponse(formattedData: CVFormData, rawData: any): NextRes
  * Creates error response
  */
 function createErrorResponse(error: unknown): NextResponse {
-  const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
+  const errorMessage =
+    error instanceof Error ? error.message : "Erreur inconnue";
   const statusCode = getErrorStatusCode(errorMessage);
 
   return NextResponse.json(
@@ -252,25 +256,28 @@ function getErrorMessage(errorMessage: string): string {
   ) {
     return errorMessage;
   }
-  
+
   // Return specific error messages as-is if they are already user-friendly
   if (errorMessage.includes("Erreur lors de la creation de tmp directoire")) {
     return errorMessage;
   }
-  
+
   if (errorMessage.includes("Erreur lors de la sauvegarde du fichier")) {
     return errorMessage;
   }
-  
+
   // Specific error messages for test scenarios (original error conditions)
-  if (errorMessage.includes("Directory not found") || errorMessage.includes("Permission denied")) {
+  if (
+    errorMessage.includes("Directory not found") ||
+    errorMessage.includes("Permission denied")
+  ) {
     return "Erreur lors de la creation de tmp directoire";
   }
-  
+
   if (errorMessage.includes("Write failed")) {
     return "Erreur lors de la sauvegarde du fichier";
   }
-  
+
   return "Erreur interne lors du parsing du CV";
 }
 
@@ -280,13 +287,24 @@ function getErrorMessage(errorMessage: string): string {
 async function runPythonParser(filePath: string): Promise<any> {
   return new Promise((resolve, reject) => {
     const { venvPython, improvedScript } = getPythonPaths();
-    
+
     console.log(`🐍 Exécution: ${venvPython} ${improvedScript} ${filePath}`);
 
-    const pythonProcess = createPythonProcess(venvPython, improvedScript, filePath);
+    const pythonProcess = createPythonProcess(
+      venvPython,
+      improvedScript,
+      filePath
+    );
     const outputCollector = createOutputCollector();
 
-    setupProcessListeners(pythonProcess, outputCollector, resolve, reject, improvedScript, filePath);
+    setupProcessListeners(
+      pythonProcess,
+      outputCollector,
+      resolve,
+      reject,
+      improvedScript,
+      filePath
+    );
     setupProcessTimeout(pythonProcess, reject);
   });
 }
@@ -295,22 +313,41 @@ async function runPythonParser(filePath: string): Promise<any> {
  * Gets Python executable and script paths
  */
 function getPythonPaths() {
-  const improvedScript = join(process.cwd(), "scripts", "pdf_parser_improved.py");
-  const venvPython = join(process.cwd(), "venv", "bin", "python");
-  
+  const improvedScript = join(
+    process.cwd(),
+    "scripts",
+    "pdf_parser_improved.py"
+  );
+
+  // Use system python on Vercel, local venv in development
+  const isVercel = process.env.VERCEL || process.env.NODE_ENV === "production";
+  const venvPython = isVercel
+    ? "python3" // Vercel provides python3 globally
+    : join(process.cwd(), "venv", "bin", "python");
+
   return { venvPython, improvedScript };
 }
 
 /**
  * Creates Python process with proper configuration
  */
-function createPythonProcess(venvPython: string, improvedScript: string, filePath: string) {
+function createPythonProcess(
+  venvPython: string,
+  improvedScript: string,
+  filePath: string
+) {
   return spawn(venvPython, [improvedScript, filePath], {
     stdio: ["pipe", "pipe", "pipe"],
     cwd: process.cwd(),
     env: {
       ...process.env,
-      PYTHONPATH: join(process.cwd(), "venv", "lib", "python3.12", "site-packages"),
+      PYTHONPATH: join(
+        process.cwd(),
+        "venv",
+        "lib",
+        "python3.12",
+        "site-packages"
+      ),
     },
   });
 }
@@ -378,7 +415,11 @@ function handleProcessClose(
   } else {
     console.error(`❌ Script Python terminé avec le code ${code}`);
     console.error("📤 Erreur stderr:", outputCollector.stderr);
-    reject(new Error(`Script Python échoué (code ${code}): ${outputCollector.stderr}`));
+    reject(
+      new Error(
+        `Script Python échoué (code ${code}): ${outputCollector.stderr}`
+      )
+    );
   }
 }
 
@@ -434,7 +475,11 @@ function runFallbackPython(
           reject(new Error(`Erreur de parsing JSON (fallback): ${parseError}`));
         }
       } else {
-        reject(new Error(`Échec complet Python (code ${code}): ${fallbackCollector.stderr}`));
+        reject(
+          new Error(
+            `Échec complet Python (code ${code}): ${fallbackCollector.stderr}`
+          )
+        );
       }
     });
 
@@ -453,7 +498,10 @@ function runFallbackPython(
 /**
  * Sets up process timeout
  */
-function setupProcessTimeout(pythonProcess: any, reject: (reason: any) => void) {
+function setupProcessTimeout(
+  pythonProcess: any,
+  reject: (reason: any) => void
+) {
   setTimeout(() => {
     pythonProcess.kill();
     reject(new Error("Timeout: Le parsing a pris trop de temps"));
@@ -545,4 +593,3 @@ function formatLanguages(languages: any[]) {
     level: lang.level || "B1",
   }));
 }
-

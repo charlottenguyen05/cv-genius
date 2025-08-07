@@ -461,7 +461,7 @@ def main():
     if args.output:
         with open(args.output, 'w', encoding='utf-8') as f:
             f.write(json_output)
-        logger.info(f"✅ Résultat sauvegardé dans: {args.output}")
+        logger.info(f"✅ Résultat de pdf_parser sauvegardé dans: {args.output}")
     else:
         print(json_output)
 
