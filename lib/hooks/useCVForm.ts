@@ -1,6 +1,11 @@
 import { useState } from "react";
-import { CVFormData, PersonalInfo, Experience, Education, Skill, Language } from "@/types";
+import { CVFormData, PersonalInfo, Experience, Education, Skill, Language, Project } from "@/types";
 
+/**
+ * Manages all CV form state and provides CRUD handlers for each section
+ * (personal info, experiences, education, skills, projects, languages).
+ * Also exposes `loadParsedData` to bulk-populate the form from a parsed CV file.
+ */
 export const useCVForm = () => {
   const [formData, setFormData] = useState<CVFormData>({
     personalInfo: {
@@ -13,6 +18,7 @@ export const useCVForm = () => {
     },
     experiences: [],
     education: [],
+    projects: [],
     skills: [],
     languages: [],
   });
@@ -140,6 +146,41 @@ export const useCVForm = () => {
     });
   };
 
+  // Project handlers
+  const addProject = () => {
+    const newProject: Partial<Project> = {
+      id: Date.now().toString(),
+      name: "",
+      technologies: "",
+      startDate: "",
+      endDate: "",
+      description: "",
+    };
+    setFormData({
+      ...formData,
+      projects: [...(formData.projects || []), newProject],
+    });
+  };
+
+  const updateProject = (index: number, field: keyof Project, value: string) => {
+    const updatedProjects = [...(formData.projects || [])];
+    updatedProjects[index] = {
+      ...updatedProjects[index],
+      [field]: value,
+    };
+    setFormData({
+      ...formData,
+      projects: updatedProjects,
+    });
+  };
+
+  const removeProject = (index: number) => {
+    setFormData({
+      ...formData,
+      projects: formData.projects?.filter((_, i) => i !== index) || [],
+    });
+  };
+
   // Language handlers
   const addLanguage = () => {
     const newLanguage: Partial<Language> = {
@@ -191,6 +232,7 @@ export const useCVForm = () => {
       personalInfo: mergedPersonalInfo,
       experiences: parsedData.experiences.length > 0 ? parsedData.experiences : formData.experiences,
       education: parsedData.education.length > 0 ? parsedData.education : formData.education,
+      projects: parsedData.projects && parsedData.projects.length > 0 ? parsedData.projects : formData.projects,
       skills: parsedData.skills.length > 0 ? parsedData.skills : formData.skills,
       languages: parsedData.languages && parsedData.languages.length > 0 ? parsedData.languages : formData.languages,
     });
@@ -211,6 +253,9 @@ export const useCVForm = () => {
     addEducation,
     updateEducation,
     removeEducation,
+    addProject,
+    updateProject,
+    removeProject,
     addSkill,
     updateSkill,
     removeSkill,

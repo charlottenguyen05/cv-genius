@@ -17,6 +17,7 @@ export class GeminiService {
    * Prend un JSON de CV et retourne un JSON amélioré
    */
   async improveCompleteCV(cvData: CVFormData): Promise<CVFormData> {
+    const targetLanguage = cvData.outputLanguage === 'en' ? 'Anglais' : 'Français';
     const masterPrompt = `Tu es un expert en rédaction de CV professionnel. Tu dois améliorer le CV fourni en respectant EXACTEMENT la structure JSON demandée.
 
 RÈGLES ABSOLUES :
@@ -27,14 +28,16 @@ RÈGLES ABSOLUES :
 5. N'ajoute AUCUN commentaire, AUCUN texte d'explication
 6. Assure-toi que tous les IDs sont préservés ou générés de façon unique
 7. Maximum 3 catégories différentes dans la section "skills"
+8. PRÉSERVE STRICTEMENT tous les accents (é, è, ê, à, â, ç, etc.) et caractères spéciaux dans le texte généré.
+9. Rédige tout le contenu amélioré en ${targetLanguage}.
 
 AMÉLIORATIONS À APPORTER :
 - Utilise des verbes d'action puissants (développé, optimisé, dirigé, etc.)
 - Quantifie les résultats quand possible (%, montants, durées)
 - Professionnalise le langage
 - Optimise pour les ATS (mots-clés pertinents)
-- Adapte au marché français
-- Description pour "experiences" et "education" en 3-4 points clés séparées par seulement un retour à la ligne
+- Adapte au marché cible (${targetLanguage})
+- Description pour "experiences", "education" et "projects" en 3-4 points clés séparées par seulement un retour à la ligne
 
 STRUCTURE JSON OBLIGATOIRE :
 {
@@ -69,6 +72,16 @@ STRUCTURE JSON OBLIGATOIRE :
       "description": "string"
     }
   ],
+  "projects": [
+    {
+      "id": "string",
+      "name": "string",
+      "technologies": "string",
+      "startDate": "string",
+      "endDate": "string",
+      "description": "string"
+    }
+  ],
   "skills": [
     {
       "id": "string",
@@ -93,7 +106,7 @@ RETOURNE UNIQUEMENT LE JSON AMÉLIORÉ (aucun autre texte) :`;
 
     try {
       const response = await this.ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.5-flash",
         contents: masterPrompt,
       });
 
@@ -111,10 +124,10 @@ RETOURNE UNIQUEMENT LE JSON AMÉLIORÉ (aucun autre texte) :`;
 
         // Fallback: nettoie le contenu au cas où il y aurait du texte supplémentaire
         let content = response.text.trim();
-        
+
         // Supprime les éventuels ```json et ``` 
         content = content.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        
+
         const jsonStart = content.indexOf("{");
         const jsonEnd = content.lastIndexOf("}") + 1;
 
@@ -133,13 +146,13 @@ RETOURNE UNIQUEMENT LE JSON AMÉLIORÉ (aucun autre texte) :`;
 
       // Validation de la structure
       const validatedCV = this.validateAndFixCVStructure(improvedCV, cvData);
-      
+
       return validatedCV;
     } catch (error) {
       console.error("Erreur lors de l'amélioration du CV:", error);
       throw new Error(
         "Impossible d'améliorer le CV: " +
-          (error instanceof Error ? error.message : "Erreur inconnue")
+        (error instanceof Error ? error.message : "Erreur inconnue")
       );
     }
   }
@@ -177,6 +190,14 @@ RETOURNE UNIQUEMENT LE JSON AMÉLIORÉ (aucun autre texte) :`;
         endDate: edu.endDate || "",
         description: edu.description || "",
       })) : [],
+      projects: Array.isArray(improvedCV.projects) ? improvedCV.projects.map((proj: any, index: number) => ({
+        id: proj.id || `proj-${Date.now()}-${index}`,
+        name: proj.name || "",
+        technologies: proj.technologies || "",
+        startDate: proj.startDate || "",
+        endDate: proj.endDate || "",
+        description: proj.description || "",
+      })) : [],
       skills: Array.isArray(improvedCV.skills) ? improvedCV.skills.map((skill: any, index: number) => ({
         id: skill.id || `skill-${Date.now()}-${index}`,
         name: skill.name || "",
@@ -188,6 +209,7 @@ RETOURNE UNIQUEMENT LE JSON AMÉLIORÉ (aucun autre texte) :`;
         name: lang.name || "",
         level: lang.level || "B1",
       })) : [],
+      outputLanguage: originalCV.outputLanguage,
     };
 
     return fixed;
@@ -214,7 +236,7 @@ Contenu amélioré:`;
 
     try {
       const response = await this.ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.6-flash",
         contents: prompt,
       });
 
@@ -227,7 +249,7 @@ Contenu amélioré:`;
       console.error("Erreur lors de l'amélioration du contenu:", error);
       throw new Error(
         "Impossible d'améliorer le contenu: " +
-          (error instanceof Error ? error.message : "Erreur inconnue")
+        (error instanceof Error ? error.message : "Erreur inconnue")
       );
     }
   }
@@ -253,7 +275,7 @@ Description:`;
 
     try {
       const response = await this.ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.6-flash",
         contents: prompt,
       });
 
@@ -265,7 +287,7 @@ Description:`;
       console.error("Erreur lors de la génération:", error);
       throw new Error(
         "Impossible de générer la description: " +
-          (error instanceof Error ? error.message : "Erreur inconnue")
+        (error instanceof Error ? error.message : "Erreur inconnue")
       );
     }
   }

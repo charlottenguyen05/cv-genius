@@ -5,7 +5,7 @@ import InputField from "@/components/dashboard/forms/InputField";
 import TextAreaField from "@/components/dashboard/forms/TextAreaField";
 import SelectField from "@/components/dashboard/forms/SelectField";
 import DeleteButton from "@/components/ui/DeleteButton";
-import { CVFormData, Experience, Education, Skill, Language } from "@/types";
+import { CVFormData, Experience, Education, Skill, Language, Project } from "@/types";
 
 interface ExperienceHandlers {
   add: () => void;
@@ -35,6 +35,12 @@ interface LanguageHandlers {
   remove: (index: number) => void;
 }
 
+interface ProjectHandlers {
+  add: () => void;
+  update: (index: number, field: keyof Project, value: string) => void;
+  remove: (index: number) => void;
+}
+
 interface CVFormSectionsProps {
   formData: CVFormData;
   updatePersonalInfo: (
@@ -43,6 +49,7 @@ interface CVFormSectionsProps {
   ) => void;
   experienceHandlers: ExperienceHandlers;
   educationHandlers: EducationHandlers;
+  projectHandlers: ProjectHandlers;
   skillHandlers: SkillHandlers;
   languageHandlers: LanguageHandlers;
 }
@@ -52,6 +59,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
   updatePersonalInfo,
   experienceHandlers,
   educationHandlers,
+  projectHandlers,
   skillHandlers,
   languageHandlers,
 }) => {
@@ -59,7 +67,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
     <>
       {/* Personal Information Section */}
       <div className="space-y-6" data-testid="cv-form">
-        <h2 className="text-xl font-semibold text-gray-900">
+        <h2 className="text-xl font-bold text-gray-900 tracking-tight">
           2. Informations personnelles
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -123,7 +131,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
       {/* Experience Section */}
       <div className="space-y-6 mt-4" data-testid="experiences-section">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight">
             3. Expériences professionnelles
           </h2>
           <Button
@@ -142,11 +150,11 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
         {formData.experiences.map((experience, index) => (
           <div
             key={experience.id || index}
-            className="p-6 border border-gray-200 rounded-lg space-y-4"
+            className="p-6 border border-gray-100 rounded-2xl space-y-4 bg-white shadow-sm hover:border-primary-200 transition-colors"
             data-testid={`experience-${index}`}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900">
                 Expérience {index + 1}
               </h3>
               <DeleteButton
@@ -228,7 +236,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
                       e.target.checked
                     )
                   }
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                   data-testid={`experience-${index}-current`}
                 />
                 <label
@@ -258,7 +266,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
       {/* Education Section */}
       <div className="space-y-6 mt-4" data-testid="education-section">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">4. Formation</h2>
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight">4. Formation</h2>
           <Button
             type="button"
             variant="outline"
@@ -275,11 +283,11 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
         {formData.education.map((education, index) => (
           <div
             key={education.id || index}
-            className="p-6 border border-gray-200 rounded-lg space-y-4"
+            className="p-6 border border-gray-100 rounded-2xl space-y-4 bg-white shadow-sm hover:border-primary-200 transition-colors"
             data-testid={`education-${index}`}
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900">
                 Formation {index + 1}
               </h3>
               <DeleteButton
@@ -364,11 +372,109 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
         ))}
       </div>
 
+      {/* Projects Section */}
+      <div className="space-y-6 mt-4" data-testid="projects-section">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight">5. Projets</h2>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={projectHandlers.add}
+            className="flex items-center space-x-2"
+            data-testid="add-project-button"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Ajouter un projet</span>
+          </Button>
+        </div>
+
+        {(formData.projects || []).map((project, index) => (
+          <div
+            key={project.id || index}
+            className="p-6 border border-gray-100 rounded-2xl space-y-4 bg-white shadow-sm hover:border-primary-200 transition-colors"
+            data-testid={`project-${index}`}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Projet {index + 1}
+              </h3>
+              <DeleteButton
+                onClick={() => projectHandlers.remove(index)}
+                variant="trash"
+                size="md"
+                ariaLabel="Supprimer ce projet"
+                data-testid={`remove-project-${index}`}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField
+                label="Nom du projet"
+                name={`project-name-${index}`}
+                value={project.name || ""}
+                onChange={(value) =>
+                  projectHandlers.update(index, "name", value)
+                }
+                placeholder="Mon super projet"
+                required
+                data-testid={`project-${index}-name`}
+              />
+              <InputField
+                label="Technologies"
+                name={`project-technologies-${index}`}
+                value={project.technologies || ""}
+                onChange={(value) =>
+                  projectHandlers.update(index, "technologies", value)
+                }
+                placeholder="React, Node.js, etc."
+                data-testid={`project-${index}-technologies`}
+              />
+              <InputField
+                label="Date de début"
+                name={`project-startDate-${index}`}
+                type="month"
+                value={project.startDate || ""}
+                onChange={(value) =>
+                  projectHandlers.update(index, "startDate", value)
+                }
+                placeholder="02/2025"
+                required
+                data-testid={`project-${index}-startDate`}
+              />
+              <InputField
+                label="Date de fin"
+                name={`project-endDate-${index}`}
+                type="month"
+                value={project.endDate || ""}
+                onChange={(value) =>
+                  projectHandlers.update(index, "endDate", value)
+                }
+                placeholder="05/2025"
+                data-testid={`project-${index}-endDate`}
+              />
+            </div>
+
+            <TextAreaField
+              label="Description"
+              name={`project-description-${index}`}
+              value={project.description || ""}
+              onChange={(value) =>
+                projectHandlers.update(index, "description", value)
+              }
+              placeholder="Décrivez votre projet (un point par ligne)..."
+              rows={4}
+              data-testid={`project-${index}-description`}
+            />
+          </div>
+        ))}
+      </div>
+
       {/* Skills Section */}
       <div className="space-y-6 mt-4" data-testid="skills-section">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">
-            5. Compétences
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+            6. Compétences
           </h2>
           <Button
             type="button"
@@ -387,7 +493,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
           {formData.skills.map((skill, index) => (
             <div
               key={skill.id || index}
-              className="p-4 border border-gray-200 rounded-lg space-y-3"
+              className="p-4 border border-gray-100 rounded-2xl space-y-3 bg-white shadow-sm hover:border-primary-200 transition-colors"
               data-testid={`skill-${index}`}
             >
               <div className="flex items-center justify-between">
@@ -454,7 +560,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
       {/* Languages Section */}
       <div className="space-y-6 mt-4" data-testid="languages-section">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">6. Langues</h2>
+          <h2 className="text-xl font-bold text-gray-900 tracking-tight">7. Langues</h2>
           <Button
             type="button"
             variant="outline"
@@ -472,7 +578,7 @@ const CVFormSections: React.FC<CVFormSectionsProps> = ({
           {(formData.languages || []).map((language, index) => (
             <div
               key={language.id || index}
-              className="p-4 border border-gray-200 rounded-lg space-y-3"
+              className="p-4 border border-gray-100 rounded-2xl space-y-3 bg-white shadow-sm hover:border-primary-200 transition-colors"
               data-testid={`language-${index}`}
             >
               <div className="flex items-center justify-between">

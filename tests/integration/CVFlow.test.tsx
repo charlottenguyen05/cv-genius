@@ -1,6 +1,6 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import DashboardPage from "@/app/dashboard/page";
+import DashboardPage from "@/app/create/page";
 import { getCurrentUser, supabase } from "@/lib/supabase/client";
 import { CVFormData } from "@/types";
 import { act } from "react";
@@ -92,7 +92,7 @@ describe("CV Flow Integration Test", () => {
     jest.clearAllMocks();
     mockFetch.mockClear();
     mockCreateObjectURL.mockReturnValue("blob:mock-url");
-    
+
     // Mock Supabase auth session
     (mockSupabase.auth.getSession as jest.MockedFunction<typeof mockSupabase.auth.getSession>).mockResolvedValue({
       data: {
@@ -124,7 +124,7 @@ describe("CV Flow Integration Test", () => {
     const user = userEvent.setup();
     render(<DashboardPage />);
 
-  
+
     await act(async () => {
       await user.type(screen.getByTestId("name-input"), "Test User");
       await user.type(screen.getByTestId("email-input"), "test@example.com");
@@ -138,7 +138,7 @@ describe("CV Flow Integration Test", () => {
       await user.click(generateButton);
     });
 
-   
+
     await waitFor(
       () => {
         expect(screen.getByTestId("cv-generation-modal")).toBeInTheDocument();
@@ -147,7 +147,7 @@ describe("CV Flow Integration Test", () => {
     );
   });
 
- 
+
   it("should handle file parsing errors gracefully", async () => {
     // SETUP : Mock d'erreur de parsing
     mockFetch.mockImplementation((url: string) => {
@@ -302,7 +302,7 @@ describe("CV Flow Integration Test", () => {
     console.log("✅ Test : Modal ouvert avec gestion d'erreur Gemini!");
   });
 
- 
+
   it("should prevent submission with incomplete data", async () => {
     mockGetCurrentUser.mockResolvedValue({
       user: {

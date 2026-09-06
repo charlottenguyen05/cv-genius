@@ -105,6 +105,16 @@ describe("CVFormSections", () => {
         description: "Specialized in web development",
       },
     ],
+    projects: [
+      {
+        id: "proj-1",
+        name: "Test Project",
+        technologies: "React, TS",
+        startDate: "2023-01",
+        endDate: "2023-06",
+        description: "A test project",
+      },
+    ],
     skills: [
       {
         id: "skill-1",
@@ -130,6 +140,11 @@ describe("CVFormSections", () => {
       remove: jest.fn(),
     },
     educationHandlers: {
+      add: jest.fn(),
+      update: jest.fn(),
+      remove: jest.fn(),
+    },
+    projectHandlers: {
       add: jest.fn(),
       update: jest.fn(),
       remove: jest.fn(),
@@ -291,11 +306,40 @@ describe("CVFormSections", () => {
     });
   });
 
+  describe("Projects Section", () => {
+    it("should render projects section with existing projects", () => {
+      render(<CVFormSections formData={mockFormData} {...mockHandlers} />);
+
+      expect(screen.getByText("5. Projets")).toBeInTheDocument();
+      expect(screen.getByTestId("add-project-button")).toBeInTheDocument();
+      expect(screen.getByTestId("project-0")).toBeInTheDocument();
+      expect(screen.getByTestId("project-0-name")).toHaveValue("Test Project");
+    });
+
+    it("should call project handlers when interacting with project fields", async () => {
+      const user = userEvent.setup();
+      render(<CVFormSections formData={mockFormData} {...mockHandlers} />);
+
+      // Test add
+      await user.click(screen.getByTestId("add-project-button"));
+      expect(mockHandlers.projectHandlers.add).toHaveBeenCalledTimes(1);
+
+      // Test update
+      const projectNameInput = screen.getByTestId("project-0-name");
+      await user.type(projectNameInput, "!");
+      expect(mockHandlers.projectHandlers.update).toHaveBeenCalledWith(0, "name", expect.any(String));
+
+      // Test remove
+      await user.click(screen.getByTestId("remove-project-0"));
+      expect(mockHandlers.projectHandlers.remove).toHaveBeenCalledWith(0);
+    });
+  });
+
   describe("Skills Section", () => {
     it("should render skills section with existing skills", () => {
       render(<CVFormSections formData={mockFormData} {...mockHandlers} />);
 
-      expect(screen.getByText("5. Compétences")).toBeInTheDocument();
+      expect(screen.getByText("6. Compétences")).toBeInTheDocument();
       expect(screen.getByTestId("add-skill-button")).toBeInTheDocument();
       expect(screen.getByTestId("skill-0")).toBeInTheDocument();
       expect(screen.getByTestId("skill-0-name")).toHaveValue("React");
@@ -339,7 +383,7 @@ describe("CVFormSections", () => {
     it("should render languages section with existing languages", () => {
       render(<CVFormSections formData={mockFormData} {...mockHandlers} />);
 
-      expect(screen.getByText("6. Langues")).toBeInTheDocument();
+      expect(screen.getByText("7. Langues")).toBeInTheDocument();
       expect(screen.getByTestId("add-language-button")).toBeInTheDocument();
       expect(screen.getByTestId("language-0")).toBeInTheDocument();
       expect(screen.getByTestId("language-0-name")).toHaveValue("French");
@@ -372,7 +416,7 @@ describe("CVFormSections", () => {
 
       render(<CVFormSections formData={noLanguagesData} {...mockHandlers} />);
       
-      expect(screen.getByText("6. Langues")).toBeInTheDocument();
+      expect(screen.getByText("7. Langues")).toBeInTheDocument();
       expect(screen.getByTestId("add-language-button")).toBeInTheDocument();
       expect(screen.queryByTestId("language-0")).not.toBeInTheDocument();
     });
@@ -386,12 +430,14 @@ describe("CVFormSections", () => {
       expect(screen.getByTestId("cv-form")).toBeInTheDocument();
       expect(screen.getByTestId("experiences-section")).toBeInTheDocument();
       expect(screen.getByTestId("education-section")).toBeInTheDocument();
+      expect(screen.getByTestId("projects-section")).toBeInTheDocument();
       expect(screen.getByTestId("skills-section")).toBeInTheDocument();
       expect(screen.getByTestId("languages-section")).toBeInTheDocument();
 
       // Add buttons
       expect(screen.getByTestId("add-experience-button")).toBeInTheDocument();
       expect(screen.getByTestId("add-education-button")).toBeInTheDocument();
+      expect(screen.getByTestId("add-project-button")).toBeInTheDocument();
       expect(screen.getByTestId("add-skill-button")).toBeInTheDocument();
       expect(screen.getByTestId("add-language-button")).toBeInTheDocument();
     });
@@ -412,8 +458,9 @@ describe("CVFormSections", () => {
       expect(screen.getByText("2. Informations personnelles")).toBeInTheDocument();
       expect(screen.getByText("3. Expériences professionnelles")).toBeInTheDocument();
       expect(screen.getByText("4. Formation")).toBeInTheDocument();
-      expect(screen.getByText("5. Compétences")).toBeInTheDocument();
-      expect(screen.getByText("6. Langues")).toBeInTheDocument();
+      expect(screen.getByText("5. Projets")).toBeInTheDocument();
+      expect(screen.getByText("6. Compétences")).toBeInTheDocument();
+      expect(screen.getByText("7. Langues")).toBeInTheDocument();
     });
 
     it("should handle incomplete data in arrays", () => {
@@ -421,6 +468,7 @@ describe("CVFormSections", () => {
         personalInfo: { name: "John" },
         experiences: [{ id: "exp-1" }],
         education: [{ id: "edu-1" }],
+        projects: [{ id: "proj-1" }],
         skills: [{ id: "skill-1" }],
         languages: [{ id: "lang-1" }],
       };

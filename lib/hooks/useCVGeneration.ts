@@ -120,6 +120,11 @@ function modalReducer(state: CVGenerationState, action: CVGenerationAction) {
   }
 }
 
+/**
+ * Orchestrates the 3-step CV generation pipeline (validation → AI improvement → PDF generation)
+ * inside a modal. Uses a reducer to track per-step status and AI streaming output.
+ * Automatically starts generation when the modal opens and resets state on close.
+ */
 export function useCVGeneration({
   isOpen,
   cvData,

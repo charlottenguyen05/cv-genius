@@ -11,6 +11,12 @@ export interface FileUploadState {
   parsedData: CVFormData | null
 }
 
+/**
+ * Handles CV file upload via drag-and-drop or file input (PDF/TXT, max 10 MB).
+ * Validates the file, sends it to the `/api/parser` endpoint, and stores the
+ * parsed `CVFormData`. Calls `onDataParsed` when parsing succeeds so the caller
+ * can auto-fill a form with the extracted data.
+ */
 export const useFileUpload = (onDataParsed?: (data: CVFormData) => void) => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)

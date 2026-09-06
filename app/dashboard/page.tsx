@@ -1,345 +1,364 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  FileText,
+  Download,
+  Eye,
+  Trash2,
+  Plus,
+  Loader2,
+  AlertCircle,
+  FolderOpen,
+  Calendar,
+  Sparkles,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Toast from "@/components/ui/Toast";
-import AuthPopUp from "@/components/ui/AuthPopUp";
-import CVGenerationModal from "@/components/dashboard/CVGenerationModal";
-import { useFileUpload } from "@/lib/hooks/useFileUpload";
-import { useCVForm } from "@/lib/hooks/useCVForm";
-import FileUploadSection from "@/components/dashboard/FileUploadSection";
-import CVFormSections from "@/components/dashboard/CVFormSections";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase/client";
+import useUserStatus from "@/lib/hooks/useUserStatus";
 import {
-  storeCVFormData,
-  getCVFormData,
-  clearCVFormData,
-} from "@/lib/utils/localStorage";
+  getResumesByUser,
+  getPdfPublicUrl,
+  deleteResume,
+} from "@/lib/supabase/client";
+
+interface Resume {
+  id: string;
+  user_id: string | null;
+  title: string;
+  generated_content: string;
+  created_at: string;
+  display_name?: string | null;
+  language?: string | null;
+}
+
+/** Extract a human-readable name from the file-path title stored in the DB */
+function extractCVName(title: string): string {
+  // title format: "{userId}/CV_{Name}__{random}_{timestamp}.pdf"
+  const filename = title.split("/").pop() || title;
+  const match = filename.match(/^CV_(.+?)__\d+_\d+\.pdf$/);
+  if (match) {
+    return match[1].replace(/_/g, " ");
+  }
+  // Fallback: strip extension
+  return filename.replace(/\.pdf$/i, "");
+}
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useUserStatus();
 
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showCard, setShowCard] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
-  // CV generation state
-  const [generatedCvId, setGeneratedCvId] = useState<string | null>(null);
-  const [isGenerationComplete, setIsGenerationComplete] = useState(false);
-
-  // CV form functionality
-  const {
-    formData,
-    updatePersonalInfo,
-    addExperience,
-    updateExperience,
-    removeExperience,
-    addEducation,
-    updateEducation,
-    removeEducation,
-    addSkill,
-    updateSkill,
-    removeSkill,
-    addLanguage,
-    updateLanguage,
-    removeLanguage,
-    loadParsedData,
-  } = useCVForm();
-
-  // File upload functionality
-  const {
-    uploadedFile,
-    isDragOver,
-    errors,
-    parsedData,
-    isUploading,
-    setIsDragOver,
-    handleDrop,
-    handleFileInput,
-    removeFile,
-  } = useFileUpload(loadParsedData);
-
-  // Restore form data from localStorage on component mount (after authentication)
+  // Auth guard
   useEffect(() => {
-    const storedData = getCVFormData();
-    if (storedData) {
-      console.log("Restoring form data from localStorage after authentication");
-      loadParsedData(storedData);
-      clearCVFormData(); // Clear after restoration
+    if (!authLoading && !user) {
+      router.push("/login");
     }
-  }, []);
+  }, [user, authLoading, router]);
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Basic validation
-    if (!formData.personalInfo.name || !formData.personalInfo.email) {
-      setShowToast(true);
-      return;
+  // Fetch resumes
+  const fetchResumes = useCallback(async () => {
+    if (!user) return;
+    try {
+      setLoading(true);
+      setError("");
+      const data = await getResumesByUser(user.id);
+      setResumes(data || []);
+    } catch (err) {
+      console.error("Error loading resumes:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Erreur lors du chargement de vos CVs"
+      );
+    } finally {
+      setLoading(false);
     }
+  }, [user]);
 
-    setIsSubmitting(true);
-    // Check if user is authenticated
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+  useEffect(() => {
+    if (user) fetchResumes();
+  }, [user, fetchResumes]);
 
-    if (!session) {
-      // User is not authenticated, store form data and show auth popup
-      storeCVFormData(formData);
-      setShowCard(true);
-      setIsSubmitting(false);
-      return;
-    }
-
-    // User is authenticated, proceed with CV generation
-    setIsModalOpen(true);
-    setIsSubmitting(false);
+  // Download handler
+  const handleDownload = (resume: Resume) => {
+    const url = getPdfPublicUrl(resume.generated_content);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = resume.title.split("/").pop() || "cv.pdf";
+    link.target = "_blank";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
-  // Fonction appelée quand la génération est terminée
-  const handleGenerationComplete = (
-    pdfBlob: Blob,
-    filename: string,
-    resumeId?: string
-  ) => {
-    console.log("handleGenerationComplete called with:", {
-      filename,
-      resumeId,
-      hasPdfBlob: pdfBlob.size > 0,
-    });
+  // Delete handler
+  const handleDelete = async (resume: Resume) => {
+    const confirmed = window.confirm(
+      `Êtes-vous sûr de vouloir supprimer ce CV ?\n\n"${extractCVName(resume.title)}"\n\nCette action est irréversible.`
+    );
+    if (!confirmed) return;
 
-    if (resumeId) {
-      setGeneratedCvId(resumeId);
-      setIsGenerationComplete(true);
-      console.log("Generation complete state updated:", {
-        generatedCvId: resumeId,
-        isGenerationComplete: true,
+    try {
+      setDeletingId(resume.id);
+      await deleteResume(resume.id, resume.generated_content);
+      setResumes((prev) => prev.filter((r) => r.id !== resume.id));
+      setToast({ message: "CV supprimé avec succès", type: "success" });
+    } catch (err) {
+      console.error("Error deleting resume:", err);
+      setToast({
+        message:
+          err instanceof Error ? err.message : "Erreur lors de la suppression",
+        type: "error",
       });
+    } finally {
+      setDeletingId(null);
     }
-
-    // Afficher le toast de succès
-    setShowToast(true);
   };
 
+  // Format date in French locale
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  // ─── Loading state ───
+  if (authLoading || (user && loading)) {
+    return (
+      <div
+        className="min-h-screen bg-surface-tint flex items-center justify-center relative overflow-hidden"
+        data-testid="dashboard-loading"
+      >
+        <div className="absolute inset-0 grid-overlay opacity-30 pointer-events-none" />
+        <div className="relative z-10 text-center">
+          <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+          </div>
+          <p className="text-gray-600 text-lg font-medium">Chargement de vos CVs…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Error state ───
+  if (error) {
+    return (
+      <div
+        className="min-h-screen bg-surface-tint flex items-center justify-center relative overflow-hidden"
+        data-testid="dashboard-error"
+      >
+        <div className="absolute inset-0 grid-overlay opacity-30 pointer-events-none" />
+        <div className="relative z-10 max-w-md mx-auto text-center bg-white rounded-3xl p-10 shadow-sm border border-gray-100">
+          <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-500" />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">
+            Erreur de chargement
+          </h1>
+          <p className="text-gray-500 mb-6">{error}</p>
+          <Button
+            onClick={fetchResumes}
+            className="px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-semibold rounded-full transition-all duration-200 shadow-sm"
+          >
+            Réessayer
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Main dashboard ───
   return (
-    <div className="min-h-screen bg-gray-50 py-8" data-testid="dashboard-page">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-sm">
-          <div className="px-6 py-8">
-            <div className="mb-8" data-testid="dashboard-header">
-              <h1
-                className="text-3xl font-bold text-gray-900 mb-2"
-                data-testid="dashboard-title"
-              >
-                Améliorer votre CV avec l'IA
-              </h1>
-              <p className="text-gray-600" data-testid="dashboard-subtitle">
-                Téléchargez votre CV et complétez les informations pour
-                l'améliorer avec l'intelligence artificielle.
-              </p>
-              <div
-                className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg"
-                data-testid="info-banner"
-              >
-                <p
-                  className="text-blue-800 font-medium"
-                  data-testid="info-banner-title"
-                >
-                  🤖 Nouveau flow avec modal et prévisualisation
-                </p>
-                <p
-                  className="text-blue-600 text-sm mt-1"
-                  data-testid="info-banner-description"
-                >
-                  Une fois le formulaire complété, cliquez sur "Générer le CV"
-                  pour voir l'amélioration par IA en temps réel. Votre CV sera
-                  automatiquement sauvegardé et vous pourrez le prévisualiser
-                  directement dans le navigateur.
-                </p>
+    <div
+      className="min-h-screen bg-surface-tint relative overflow-hidden py-10"
+      data-testid="dashboard-page"
+    >
+      {/* Background decoration */}
+      <div className="absolute inset-0 grid-overlay opacity-30 pointer-events-none" />
+      <div className="absolute inset-0 hero-glow pointer-events-none" />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* ── Header ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-10 gap-4">
+          <div>
+            <p className="section-label mb-2">// Mon Espace //</p>
+            <h1
+              className="text-3xl md:text-4xl font-black text-gray-900 tracking-tight"
+              data-testid="dashboard-title"
+            >
+              Mes CVs
+            </h1>
+            <p className="text-gray-500 text-lg mt-1" data-testid="dashboard-subtitle">
+              Retrouvez et gérez tous vos CVs générés par l&apos;IA
+            </p>
+          </div>
+          <Link
+            href="/create"
+            className="btn-primary text-base px-6 py-3 self-start sm:self-auto"
+            data-testid="create-cv-button"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Créer un nouveau CV
+          </Link>
+        </div>
+
+        {/* ── Empty state ── */}
+        {resumes.length === 0 ? (
+          <div
+            className="bg-white rounded-3xl shadow-sm border border-gray-100 p-16 text-center"
+            data-testid="dashboard-empty"
+          >
+            <div className="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FolderOpen className="w-10 h-10 text-primary-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+              Aucun CV pour l&apos;instant
+            </h2>
+            <p className="text-gray-500 mb-8 max-w-md mx-auto">
+              Vous n&apos;avez pas encore généré de CV. Créez votre premier CV
+              optimisé par l&apos;IA en quelques minutes !
+            </p>
+            <Link
+              href="/create"
+              className="btn-primary text-lg px-8 py-4"
+              data-testid="empty-create-button"
+            >
+              <Sparkles className="w-5 h-5 mr-2" />
+              Créer mon premier CV
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* ── Stats bar ── */}
+            <div
+              className="bg-dark-card rounded-2xl p-4 mb-8 flex items-center gap-3"
+              data-testid="dashboard-stats"
+            >
+              <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-primary-300" />
               </div>
-              {parsedData && (
-                <div
-                  className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg"
-                  data-testid="parsing-success-banner"
-                >
-                  <p
-                    className="text-green-800 font-medium"
-                    data-testid="parsing-success-title"
-                  >
-                    ✅ CV analysé avec succès
-                  </p>
-                  <p
-                    className="text-green-600 text-sm mt-1"
-                    data-testid="parsing-success-description"
-                  >
-                    Les données de votre CV ont été extraites et pré-remplies
-                    dans le formulaire. Vous pouvez les modifier avant de
-                    générer la version améliorée.
-                  </p>
-                </div>
-              )}
+              <span className="text-white font-medium">
+                {resumes.length} CV{resumes.length > 1 ? "s" : ""} généré
+                {resumes.length > 1 ? "s" : ""}
+              </span>
             </div>
 
-            <form
-              onSubmit={onSubmit}
-              className="space-y-8"
-              data-testid="dashboard-content"
+            {/* ── Card grid ── */}
+            <div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              data-testid="dashboard-grid"
             >
-              {/* Section Upload */}
-              <FileUploadSection
-                uploadedFile={uploadedFile}
-                isDragOver={isDragOver}
-                errors={errors}
-                isUploading={isUploading}
-                setIsDragOver={setIsDragOver}
-                handleDrop={handleDrop}
-                handleFileInput={handleFileInput}
-                removeFile={removeFile}
-              />
-
-              {/* Sections du CV */}
-              <div data-testid="cv-form-wrapper">
-                <CVFormSections
-                  formData={formData}
-                  updatePersonalInfo={updatePersonalInfo}
-                  experienceHandlers={{
-                    add: addExperience,
-                    update: updateExperience,
-                    remove: removeExperience,
-                  }}
-                  educationHandlers={{
-                    add: addEducation,
-                    update: updateEducation,
-                    remove: removeEducation,
-                  }}
-                  skillHandlers={{
-                    add: addSkill,
-                    update: updateSkill,
-                    remove: removeSkill,
-                  }}
-                  languageHandlers={{
-                    add: addLanguage,
-                    update: updateLanguage,
-                    remove: removeLanguage,
-                  }}
-                />
-              </div>
-
-              {/* Bouton de génération */}
-              <div
-                className="flex justify-center pt-8"
-                data-testid="submit-section"
-              >
-                <Button
-                  type="submit"
-                  disabled={
-                    isSubmitting ||
-                    !formData.personalInfo.name ||
-                    !formData.personalInfo.email
-                  }
-                  className="px-8 py-4 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  data-testid="generate-cv-button"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div
-                        className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"
-                        data-testid="loading-spinner"
-                      ></div>
-                      <span data-testid="loading-text">
-                        Génération en cours...
-                      </span>
-                    </>
-                  ) : (
-                    <span data-testid="generate-text">
-                      🚀 Générer le CV avec IA
-                    </span>
-                  )}
-                </Button>
-              </div>
-
-              {/* Section de prévisualisation après génération */}
-              {isGenerationComplete && generatedCvId && (
+              {resumes.map((resume) => (
                 <div
-                  className={`mt-8 p-6 bg-green-50 border border-green-200 rounded-lg ${
-                    isModalOpen ? "opacity-75" : ""
-                  }`}
-                  data-testid="generation-success-section"
+                  key={resume.id}
+                  className="group bg-white rounded-3xl shadow-sm border border-gray-100 hover:shadow-lg hover:border-primary-200 transition-all duration-300 overflow-hidden flex flex-col hover:-translate-y-1"
+                  data-testid={`cv-card-${resume.id}`}
                 >
-                  <div className="text-center">
-                    <div className="mb-4">
-                      <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-2xl">✅</span>
+                  {/* Card top accent */}
+                  <div className="h-1.5 bg-gradient-to-r from-primary-400 to-primary-600" />
+
+                  {/* Card body */}
+                  <div className="p-6 flex-1 flex flex-col">
+                    {/* Icon + title */}
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className="w-12 h-12 rounded-2xl bg-primary-50 group-hover:bg-primary-100 flex items-center justify-center transition-colors shrink-0">
+                        <FileText className="w-6 h-6 text-primary-500" />
                       </div>
-                      <h3 className="text-xl font-semibold text-green-800 mb-2">
-                        CV généré avec succès !
-                      </h3>
-                      <p className="text-green-700 mb-4">
-                        Votre CV a été créé et est prêt à être consulté !
-                      </p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3
+                            className="text-lg font-bold text-gray-900 truncate"
+                            title={resume.display_name?.trim() || extractCVName(resume.title)}
+                          >
+                            {resume.display_name?.trim() || extractCVName(resume.title)}
+                          </h3>
+                          {resume.language && (
+                            <span
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 ${
+                                resume.language === 'fr'
+                                  ? 'bg-primary-50 text-primary-700 border border-primary-200'
+                                  : 'bg-gray-100 text-gray-700 border border-gray-200'
+                              }`}
+                              data-testid={`language-badge-${resume.id}`}
+                            >
+                              {resume.language === 'fr' ? 'FR' : 'EN'}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1 text-sm text-gray-400">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>{formatDate(resume.created_at)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Spacer */}
+                    <div className="flex-1" />
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
                       <Button
-                        onClick={() => router.push(`/preview/${generatedCvId}`)}
-                        className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors duration-200"
-                        data-testid="view-cv-button"
+                        onClick={() =>
+                          router.push(`/preview/${resume.id}`)
+                        }
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium bg-primary-50 text-primary-700 rounded-xl hover:bg-primary-100 transition-colors"
+                        data-testid={`preview-btn-${resume.id}`}
                       >
-                        Voir le CV
+                        <Eye className="w-4 h-4" />
+                        Voir
+                      </Button>
+                      <Button
+                        onClick={() => handleDownload(resume)}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium bg-dark-card/10 text-dark-card rounded-xl hover:bg-dark-card/20 transition-colors"
+                        data-testid={`download-btn-${resume.id}`}
+                      >
+                        <Download className="w-4 h-4" />
+                        Télécharger
+                      </Button>
+                      <Button
+                        onClick={() => handleDelete(resume)}
+                        disabled={deletingId === resume.id}
+                        className="inline-flex items-center justify-center p-2 text-sm font-medium bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors disabled:opacity-50"
+                        data-testid={`delete-btn-${resume.id}`}
+                      >
+                        {deletingId === resume.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
                       </Button>
                     </div>
                   </div>
                 </div>
-              )}
-
-              {/* Message d'information */}
-              <div className="text-center" data-testid="submit-requirements">
-                <p className="text-sm text-gray-500">
-                  Minimum requis: <strong>nom</strong> et <strong>email</strong>
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  Plus vous fournissez d'informations, meilleur sera le résultat
-                </p>
-              </div>
-            </form>
-          </div>
-        </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Modal de génération */}
-      <CVGenerationModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onComplete={handleGenerationComplete}
-        cvData={formData}
-      />
-
-      {/* Toast de succès */}
-      {showToast && (
+      {/* Toast notifications */}
+      {toast && (
         <Toast
-          message="CV généré avec succès!"
-          type="success"
-          onClose={() => setShowToast(false)}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
-
-      {/* Toast d'erreur */}
-      {error && (
-        <Toast
-          message={error}
-          type="error"
-          onClose={() => setShowToast(false)}
-        />
-      )}
-
-      {/* Pop-up d'authentification */}
-      <AuthPopUp
-        isOpen={showCard}
-        onClose={() => setShowCard(false)}
-        formData={formData}
-      />
     </div>
   );
 }

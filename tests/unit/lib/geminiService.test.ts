@@ -60,6 +60,17 @@ describe("GeminiService", () => {
         level: "native",
       },
     ],
+    projects: [
+      {
+        id: "proj-1",
+        name: "Personal Website",
+        technologies: "React, Next.js",
+        startDate: "2022-01",
+        endDate: "2022-03",
+        description: "Built a personal portfolio",
+      }
+    ],
+    outputLanguage: "fr",
   };
 
   const improvedCVResponse = {
@@ -111,6 +122,17 @@ describe("GeminiService", () => {
         level: "native",
       },
     ],
+    projects: [
+      {
+        id: "proj-1",
+        name: "Portfolio Personnel",
+        technologies: "React, Next.js, TailwindCSS",
+        startDate: "2022-01",
+        endDate: "2022-03",
+        description: "Création d'un portfolio en ligne performant avec Next.js",
+      }
+    ],
+    outputLanguage: "fr",
   };
 
   beforeEach(() => {
@@ -143,7 +165,7 @@ describe("GeminiService", () => {
       const result = await service.improveCompleteCV(mockCVData);
 
       expect(mockModels.generateContent).toHaveBeenCalledWith({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.5-flash",
         contents: expect.stringContaining(
           "Tu es un expert en rédaction de CV professionnel"
         ),
@@ -193,6 +215,7 @@ This is the final result.`;
       expect(result.personalInfo.email).toBe(mockCVData.personalInfo.email);
       expect(result.experiences[0].id).toBeDefined();
       expect(result.education).toEqual([]);
+      expect(result.projects).toEqual([]);
       expect(result.skills).toEqual([]);
       expect(result.languages).toEqual([]);
     });
@@ -232,6 +255,7 @@ This is the final result.`;
         ...improvedCVResponse,
         experiences: [{ ...improvedCVResponse.experiences[0], id: undefined }],
         education: [{ ...improvedCVResponse.education[0], id: undefined }],
+        projects: [{ ...improvedCVResponse.projects[0], id: undefined }],
         skills: [{ ...improvedCVResponse.skills[0], id: undefined }],
         languages: [{ ...improvedCVResponse.languages[0], id: undefined }],
       };
@@ -244,6 +268,7 @@ This is the final result.`;
 
       expect(result.experiences[0].id).toMatch(/exp-\d+-0/);
       expect(result.education?.[0]?.id).toMatch(/edu-\d+-0/);
+      expect(result.projects?.[0]?.id).toMatch(/proj-\d+-0/);
       expect(result.skills?.[0]?.id).toMatch(/skill-\d+-0/);
       expect(result.languages?.[0]?.id).toMatch(/lang-\d+-0/);
     });
@@ -263,7 +288,7 @@ This is the final result.`;
       );
 
       expect(mockModels.generateContent).toHaveBeenCalledWith({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.6-flash",
         contents: expect.stringContaining(
           "En tant qu'expert en rédaction de CV"
         ),
@@ -304,7 +329,7 @@ This is the final result.`;
       );
 
       expect(mockModels.generateContent).toHaveBeenCalledWith({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.6-flash",
         contents: expect.stringContaining(
           "Génère une description professionnelle"
         ),
@@ -356,12 +381,14 @@ This is the final result.`;
     it("should handle null/undefined sections", async () => {
       const invalidCV: CVFormData = {
         ...mockCVData,
-        languages: [],
+        languages: undefined,
+        projects: undefined,
       };
 
       const improvedInvalidCV = {
         ...improvedCVResponse,
-        languages: [],
+        languages: undefined,
+        projects: undefined,
       };
 
       mockModels.generateContent.mockResolvedValue({
@@ -374,6 +401,7 @@ This is the final result.`;
       expect(result.experiences).toEqual(improvedInvalidCV.experiences);
       expect(result.education).toEqual(improvedInvalidCV.education);
       expect(result.skills).toEqual(improvedInvalidCV.skills);
+      expect(result.projects).toEqual([]);
       expect(result.languages).toEqual([]);
     });
 

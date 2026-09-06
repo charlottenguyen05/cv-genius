@@ -38,6 +38,7 @@ describe("useCVForm", () => {
       },
       experiences: [],
       education: [],
+      projects: [],
       skills: [],
       languages: [],
     });
@@ -119,6 +120,7 @@ describe("useCVForm", () => {
         },
       ],
       education: [],
+      projects: [],
       skills: [],
       languages: [],
     };

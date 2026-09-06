@@ -45,7 +45,7 @@ export default function CVGenerationModal({
     // First check status-based icons
     switch (step.status) {
       case "running":
-        return <Loader2 className="w-5 h-5 animate-spin text-blue-500" />;
+        return <Loader2 className="w-5 h-5 animate-spin text-primary-500" />;
       case "completed":
         return <CheckCircle className="w-5 h-5 text-green-500" />;
       case "error":
@@ -70,7 +70,7 @@ export default function CVGenerationModal({
   const getStepTextColor = (status: GenerationStep["status"]) => {
     switch (status) {
       case "running":
-        return "text-blue-600";
+        return "text-primary-600";
       case "completed":
         return "text-green-600";
       case "error":
@@ -85,7 +85,7 @@ export default function CVGenerationModal({
       data-testid="cv-generation-modal"
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
     >
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden border border-gray-100">
         {/* Header */}
         <div
           data-testid="cv-generation-modal-header"
@@ -135,7 +135,7 @@ export default function CVGenerationModal({
                   )}
                 </div>
                 {step.status === "running" && (
-                  <div className="text-sm text-blue-600 font-medium">
+                  <div className="text-sm text-primary-600 font-medium">
                     En cours...
                   </div>
                 )}
@@ -147,18 +147,18 @@ export default function CVGenerationModal({
           {isCompleted && resumeId && (
             <div
               data-testid="cv-generation-success-actions"
-              className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4"
+              className="bg-primary-50 border border-primary-200 rounded-2xl p-4 mb-4"
             >
               <div className="flex items-center space-x-2 mb-4">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                <span className="text-green-700 font-medium">
+                <CheckCircle className="w-5 h-5 text-primary-500" />
+                <span className="text-primary-700 font-medium">
                   CV généré avec succès !
                 </span>
               </div>
               <div className="flex justify-center">
                 <Button
                   onClick={handlePreview}
-                  className="flex items-center space-x-3 px-8 py-4 bg-green-600 text-white text-lg font-semibold rounded-xl hover:bg-green-700 focus:ring-4 focus:ring-green-300 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="btn-primary flex items-center space-x-3 px-8 py-4 text-lg"
                   data-testid="preview-cv-button"
                 >
                   <Eye className="w-6 h-6" />
@@ -172,11 +172,11 @@ export default function CVGenerationModal({
           {currentAiStep && !isCompleted && (
             <div
               data-testid="cv-generation-current-ai-step"
-              className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4"
+              className="bg-primary-50 border border-primary-200 rounded-2xl p-4 mb-4"
             >
               <div className="flex items-center space-x-2">
-                <Brain className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium text-blue-700">
+                <Brain className="w-4 h-4 text-primary-500" />
+                <span className="text-sm font-medium text-primary-700">
                   {currentAiStep}
                 </span>
               </div>
@@ -190,7 +190,7 @@ export default function CVGenerationModal({
               className="bg-gray-50 border rounded-lg p-4 mb-4"
             >
               <div className="flex items-center space-x-2 mb-2">
-                <Brain className="w-4 h-4 text-purple-500" />
+                <Brain className="w-4 h-4 text-primary-500" />
                 <span className="text-sm font-medium text-gray-700">
                   Amélioration IA en temps réel:
                 </span>
@@ -200,7 +200,7 @@ export default function CVGenerationModal({
                 {isGenerating &&
                   steps.find((s) => s.id === "ai-improvement")?.status ===
                     "running" && (
-                    <span className="inline-block w-2 h-4 bg-blue-500 animate-pulse ml-1"></span>
+                    <span className="inline-block w-2 h-4 bg-primary-500 animate-pulse ml-1"></span>
                   )}
               </div>
             </div>
@@ -232,7 +232,7 @@ export default function CVGenerationModal({
               <Button
                 data-testid="cv-generation-retry"
                 onClick={startGeneration}
-                className="mt-3 px-4 py-2 bg-red-100 text-red-700 rounded-md text-sm hover:bg-red-200 transition-colors"
+                className="mt-3 px-4 py-2 bg-red-50 text-red-700 rounded-full text-sm hover:bg-red-100 transition-colors border border-red-200"
               >
                 Réessayer
               </Button>
@@ -252,7 +252,7 @@ export default function CVGenerationModal({
             >
               {isGenerating ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
+                  <Loader2 className="w-4 h-4 animate-spin text-primary-500 inline mr-2" />
                   Génération en cours...
                 </>
               ) : error ? (

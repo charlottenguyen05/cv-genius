@@ -1,0 +1,18 @@
+# Start from the official AWS Lambda Python 3.12 base image.
+# This image already knows how to run Lambda functions.
+FROM public.ecr.aws/lambda/python:3.12
+
+# Copy the Python requirements into Lambda's working directory
+COPY scripts/requirements.txt ${LAMBDA_TASK_ROOT}/requirements.txt
+
+# Install pdfplumber + spaCy + French model (baked permanently into the image)
+RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
+
+# Copy the PDF parser script
+COPY scripts/pdf_parser_improved.py ${LAMBDA_TASK_ROOT}/pdf_parser_improved.py
+
+# Copy the Lambda handler (the function AWS calls when invoked)
+COPY lambda_parser_handler.py ${LAMBDA_TASK_ROOT}/handler.py
+
+# Tell Lambda: call the lambda_handler function inside handler.py
+CMD ["handler.lambda_handler"]
