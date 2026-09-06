@@ -12,7 +12,7 @@ on:
   workflow_dispatch: # Allow manual trigger
 
 env:
-  AWS_REGION: eu-west-1
+  AWS_REGION: eu-west-3
   ECR_REPOSITORY: cv-genius-parser
   LAMBDA_FUNCTION_NAME: cv-genius-pdf-parser
 
