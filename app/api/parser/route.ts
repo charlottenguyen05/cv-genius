@@ -1,8 +1,5 @@
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-import { readFile } from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, unlink, access, mkdir } from "fs/promises";
-import { join } from "path";
 import { CVFormData } from "@/types";
 
 export const runtime = "nodejs";
@@ -16,21 +13,19 @@ const SUPPORTED_FILE_TYPE = "pdf";
  * Nouvelle API de parsing PDF utilisant Python
  */
 export async function POST(request: NextRequest) {
-  let tempFilePath: string | null = null;
-
   try {
     // 1. Extract and validate file
     const file = await extractFileFromRequest(request);
     validateFile(file);
     logFileReceived(file);
 
-    // 2. Setup temporary file
-    await ensureTmpDirectory();
-    tempFilePath = await createTemporaryFile(file);
+    // 2. Read file to buffer directly (no temp file needed for Lambda)
+    const fileBytes = await file.arrayBuffer();
+    const fileBuffer = Buffer.from(fileBytes);
 
-    // 3. Process file with Python parser
-    console.log("🐍 Lancement du parser Python...");
-    const parsedData = await runPythonParser(tempFilePath);
+    // 3. Process file with Python parser (via Lambda)
+    console.log("🐍 Lancement du parser Python (Lambda)...");
+    const parsedData = await runPythonParser(fileBuffer);
 
     // 4. Format and return results
     const formattedData = formatParsedData(parsedData);
@@ -40,11 +35,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("❌ Erreur lors du parsing:", error);
     return createErrorResponse(error);
-  } finally {
-    // 5. Cleanup temporary file
-    if (tempFilePath) {
-      await cleanupTemporaryFile(tempFilePath);
-    }
   }
 }
 
@@ -98,79 +88,7 @@ function logFileReceived(file: File): void {
   console.log(`📄 Fichier reçu: ${file.name} (${file.size} bytes)`);
 }
 
-/**
- * Ensures tmp directory exists
- */
-async function ensureTmpDirectory(): Promise<void> {
-  const tmpPath = getTmpDirectoryPath();
 
-  try {
-    await access(tmpPath);
-    console.log("✅ tmp folder already exists");
-  } catch {
-    await createTmpDirectory(tmpPath);
-  }
-}
-
-/**
- * Creates tmp directory
- */
-async function createTmpDirectory(tmpPath: string): Promise<void> {
-  try {
-    await mkdir(tmpPath, { recursive: true });
-    console.log("✅ tmp folder created successfully");
-  } catch (mkdirError) {
-    console.error("❌ Error creating tmp folder:", mkdirError);
-    throw new Error("Erreur lors de la creation de tmp directoire");
-  }
-}
-
-/**
- * Creates a temporary file and returns its path
- */
-async function createTemporaryFile(file: File): Promise<string> {
-  const fileBytes = await file.arrayBuffer();
-  const buffer = Buffer.from(fileBytes);
-  const tempFilePath = generateTempFilePath();
-
-  try {
-    await writeFile(tempFilePath, buffer);
-    console.log(`📁 Fichier temporaire créé: ${tempFilePath}`);
-    return tempFilePath;
-  } catch (error) {
-    console.error("❌ Erreur lors de la sauvegarde temporaire:", error);
-    throw new Error("Erreur lors de la sauvegarde du fichier");
-  }
-}
-
-/**
- * Generates a unique temporary file path
- */
-function generateTempFilePath(): string {
-  const tempFileName = `temp_cv_${Date.now()}_${Math.random()
-    .toString(36)
-    .slice(2, 9)}.pdf`;
-  return join(getTmpDirectoryPath(), tempFileName);
-}
-
-/**
- * Gets the tmp directory path for storing temporary PDF files
- */
-function getTmpDirectoryPath(): string {
-  return join(process.cwd(), "tmp");
-}
-
-/**
- * Cleans up temporary file
- */
-async function cleanupTemporaryFile(filePath: string): Promise<void> {
-  try {
-    await unlink(filePath);
-    console.log("🗑️ Fichier temporaire supprimé");
-  } catch (error) {
-    console.warn("⚠️ Impossible de supprimer le fichier temporaire:", error);
-  }
-}
 
 /**
  * Logs parsing success with statistics
@@ -272,11 +190,9 @@ function getErrorMessage(errorMessage: string): string {
 }
 
 /**
- * Exécute le script Python de parsing
+ * Exécute le script Python de parsing via AWS Lambda
  */
-async function runPythonParser(filePath: string): Promise<any> {
-  const fileBuffer = await readFile(filePath);
-
+async function runPythonParser(fileBuffer: Buffer): Promise<any> {
   // Guard against Lambda's 6 MB sync payload limit (base64 adds ~33% overhead)
   const MAX_PDF_BYTES = 4 * 1024 * 1024; // 4 MB raw
   if (fileBuffer.length > MAX_PDF_BYTES) {
