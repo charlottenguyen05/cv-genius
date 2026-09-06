@@ -1,0 +1,32 @@
+name: 🔄 Keep Supabase Alive
+
+on:
+  schedule:
+    # Every day at 08:00 UTC = 10:00 CET / 09:00 CEST
+    - cron: '0 8 * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  ping-supabase:
+    name: Ping Supabase Database
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase to prevent auto-pause
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          echo "🏓 Pinging Supabase at $(date)"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/resumes?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY")
+          echo "HTTP Status: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Supabase is alive and responding"
+          elif [ "$HTTP_STATUS" -eq 401 ] || [ "$HTTP_STATUS" -eq 403 ]; then
+            echo "⚠️ Auth error ($HTTP_STATUS) — Supabase is NOT paused. Table may be empty. OK."
+          else
+            echo "❌ Unexpected status: $HTTP_STATUS — Supabase may be paused or unreachable!"
+            exit 1
+          fi

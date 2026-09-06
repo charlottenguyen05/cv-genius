@@ -1,5 +1,6 @@
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
+import { readFile } from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
-import { spawn } from "child_process";
 import { writeFile, unlink, access, mkdir } from "fs/promises";
 import { join } from "path";
 import { CVFormData } from "@/types";
@@ -7,7 +8,7 @@ import { CVFormData } from "@/types";
 export const runtime = "nodejs";
 
 // Constants
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB — matches Lambda sync payload limit
 const PYTHON_TIMEOUT = 30000; // 30 seconds
 const SUPPORTED_FILE_TYPE = "pdf";
 
@@ -274,229 +275,49 @@ function getErrorMessage(errorMessage: string): string {
  * Exécute le script Python de parsing
  */
 async function runPythonParser(filePath: string): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const { venvPython, improvedScript } = getPythonPaths();
+  const fileBuffer = await readFile(filePath);
 
-    console.log(`🐍 Exécution: ${venvPython} ${improvedScript} ${filePath}`);
-
-    const pythonProcess = createPythonProcess(
-      venvPython,
-      improvedScript,
-      filePath
-    );
-    const outputCollector = createOutputCollector();
-
-    setupProcessListeners(
-      pythonProcess,
-      outputCollector,
-      resolve,
-      reject,
-      improvedScript,
-      filePath
-    );
-    setupProcessTimeout(pythonProcess, reject);
-  });
-}
-
-/**
- * Gets Python executable and script paths
- */
-function getPythonPaths() {
-  const improvedScript = join(
-    process.cwd(),
-    "scripts",
-    "pdf_parser_improved.py"
-  );
-
-  // Resolve venv Python path — differs between Windows and Unix
-  const isWindows = process.platform === "win32";
-  const venvPython = isWindows
-    ? join(process.cwd(), "venv", "Scripts", "python.exe")
-    : join(process.cwd(), "venv", "bin", "python");
-
-  return { venvPython, improvedScript };
-}
-
-/**
- * Creates Python process with proper configuration
- */
-function createPythonProcess(
-  venvPython: string,
-  improvedScript: string,
-  filePath: string
-) {
-  return spawn(venvPython, [improvedScript, filePath], {
-    stdio: ["pipe", "pipe", "pipe"],
-    cwd: process.cwd(),
-    env: {
-      ...process.env,
-      PYTHONIOENCODING: "utf-8",
-      PYTHONPATH: join(
-        process.cwd(),
-        "venv",
-        "lib",
-        "python3.12",
-        "site-packages"
-      ),
-    },
-  });
-}
-
-/**
- * Creates output collector for Python process
- */
-function createOutputCollector() {
-  return {
-    stdout: "",
-    stderr: "",
-  };
-}
-
-/**
- * Sets up process listeners for Python execution
- */
-function setupProcessListeners(
-  pythonProcess: any,
-  outputCollector: any,
-  resolve: (value: any) => void,
-  reject: (reason: any) => void,
-  improvedScript: string,
-  filePath: string
-) {
-  // Collecte des données de sortie
-  pythonProcess.stdout.on("data", (data: Buffer) => {
-    outputCollector.stdout += data.toString("utf-8");
-  });
-
-  pythonProcess.stderr.on("data", (data: Buffer) => {
-    outputCollector.stderr += data.toString("utf-8");
-  });
-
-  // Gestion de la fin du processus
-  pythonProcess.on("close", (code: number) => {
-    handleProcessClose(code, outputCollector, resolve, reject);
-  });
-
-  // Gestion des erreurs du processus
-  pythonProcess.on("error", (error: Error) => {
-    handleProcessError(error, improvedScript, filePath, resolve, reject);
-  });
-}
-
-/**
- * Handles Python process close event
- */
-function handleProcessClose(
-  code: number,
-  outputCollector: any,
-  resolve: (value: any) => void,
-  reject: (reason: any) => void
-) {
-  if (code === 0) {
-    try {
-      const result = JSON.parse(outputCollector.stdout);
-      console.log("✅ Script Python terminé avec succès");
-      resolve(result);
-    } catch (parseError) {
-      console.error("❌ Erreur lors du parsing JSON:", parseError);
-      console.error("📤 Sortie brute du script:", outputCollector.stdout);
-      reject(new Error(`Erreur de parsing JSON: ${parseError}`));
-    }
-  } else {
-    console.error(`❌ Script Python terminé avec le code ${code}`);
-    console.error("📤 Erreur stderr:", outputCollector.stderr);
-    reject(
-      new Error(
-        `Script Python échoué (code ${code}): ${outputCollector.stderr}`
-      )
+  // Guard against Lambda's 6 MB sync payload limit (base64 adds ~33% overhead)
+  const MAX_PDF_BYTES = 4 * 1024 * 1024; // 4 MB raw
+  if (fileBuffer.length > MAX_PDF_BYTES) {
+    throw new Error(
+      `PDF too large: ${(fileBuffer.length / 1024 / 1024).toFixed(1)} MB. Maximum is 4 MB.`
     );
   }
-}
 
-/**
- * Handles Python process error with fallback
- */
-function handleProcessError(
-  error: Error,
-  improvedScript: string,
-  filePath: string,
-  resolve: (value: any) => void,
-  reject: (reason: any) => void
-) {
-  console.error("❌ Erreur lors du lancement du script Python (venv):", error);
-  console.log("🔄 Tentative avec python3 système...");
+  const pdf_base64 = fileBuffer.toString("base64");
 
-  runFallbackPython(improvedScript, filePath, resolve, reject, error);
-}
+  const lambdaClient = new LambdaClient({
+    region: process.env.AWS_REGION ?? "eu-west-1",
+  });
 
-/**
- * Runs fallback Python execution
- */
-function runFallbackPython(
-  improvedScript: string,
-  filePath: string,
-  resolve: (value: any) => void,
-  reject: (reason: any) => void,
-  originalError: Error
-) {
-  try {
-    const fallbackProcess = spawn("python3", [improvedScript, filePath], {
-      stdio: ["pipe", "pipe", "pipe"],
-      cwd: process.cwd(),
-    });
+  const command = new InvokeCommand({
+    FunctionName:
+      process.env.PARSER_LAMBDA_FUNCTION_NAME ?? "cv-genius-pdf-parser",
+    Payload: JSON.stringify({ pdf_base64 }),
+  });
 
-    const fallbackCollector = createOutputCollector();
+  console.log("🔗 Invoking Lambda PDF parser...");
+  const response = await lambdaClient.send(command);
 
-    fallbackProcess.stdout.on("data", (data: Buffer) => {
-      fallbackCollector.stdout += data.toString("utf-8");
-    });
+  const payloadString = Buffer.from(response.Payload!).toString("utf-8");
+  const payload = JSON.parse(payloadString);
 
-    fallbackProcess.stderr.on("data", (data: Buffer) => {
-      fallbackCollector.stderr += data.toString("utf-8");
-    });
-
-    fallbackProcess.on("close", (code: number) => {
-      if (code === 0) {
-        try {
-          const result = JSON.parse(fallbackCollector.stdout);
-          console.log("✅ Fallback Python3 réussi");
-          resolve(result);
-        } catch (parseError) {
-          reject(new Error(`Erreur de parsing JSON (fallback): ${parseError}`));
-        }
-      } else {
-        reject(
-          new Error(
-            `Échec complet Python (code ${code}): ${fallbackCollector.stderr}`
-          )
-        );
-      }
-    });
-
-    fallbackProcess.on("error", (fallbackError: Error) => {
-      reject(
-        new Error(
-          `Python indisponible (venv: ${originalError.message}, système: ${fallbackError.message})`
-        )
-      );
-    });
-  } catch (fallbackError) {
-    reject(new Error(`Impossible de lancer Python: ${originalError.message}`));
+  if (payload.statusCode !== 200) {
+    const errorBody =
+      typeof payload.body === "string"
+        ? JSON.parse(payload.body)
+        : payload.body;
+    throw new Error(
+      `Lambda parser error: ${errorBody?.error ?? "Unknown error"}`
+    );
   }
+
+  return typeof payload.body === "string"
+    ? JSON.parse(payload.body)
+    : payload.body;
 }
 
-/**
- * Sets up process timeout
- */
-function setupProcessTimeout(
-  pythonProcess: any,
-  reject: (reason: any) => void
-) {
-  setTimeout(() => {
-    pythonProcess.kill();
-    reject(new Error("Timeout: Le parsing a pris trop de temps"));
-  }, PYTHON_TIMEOUT);
-}
 
 /**
  * Formate les données parsées pour correspondre à l'interface CVFormData
