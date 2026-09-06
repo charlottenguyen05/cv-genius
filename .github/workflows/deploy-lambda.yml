@@ -1,0 +1,57 @@
+name: 🐍 Deploy Python Parser Lambda
+
+on:
+  push:
+    branches: [main]
+    paths:
+      # Only trigger when Python-related files change
+      - 'scripts/pdf_parser_improved.py'
+      - 'scripts/requirements.txt'
+      - 'lambda_parser_handler.py'
+      - 'Dockerfile.lambda'
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  AWS_REGION: eu-west-1
+  ECR_REPOSITORY: cv-genius-parser
+  LAMBDA_FUNCTION_NAME: cv-genius-pdf-parser
+
+jobs:
+  deploy-lambda:
+    name: Build and Deploy Lambda Container
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔑 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🐳 Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 🔨 Build and push Docker image to ECR
+        run: |
+          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          IMAGE_URI=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest
+          echo "Building image: $IMAGE_URI"
+          docker build -f Dockerfile.lambda -t $IMAGE_URI .
+          docker push $IMAGE_URI
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+
+      - name: ⚡ Update Lambda function code
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+            --image-uri $IMAGE_URI \
+            --region ${{ env.AWS_REGION }}
+          echo "Waiting for Lambda update to complete..."
+          aws lambda wait function-updated \
+            --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+            --region ${{ env.AWS_REGION }}
+          echo "✅ Lambda deployed successfully!"
