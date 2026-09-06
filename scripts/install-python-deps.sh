@@ -92,17 +92,11 @@ fi
 # Vérification de l'installation
 log_info "Vérification de l'installation..."
 
-if python -c "import pdfplumber; print('✅ pdfplumber OK')" 2>/dev/null; then
-    log_info "pdfplumber installé avec succès"
+if python -c "import pymupdf; print('✅ pymupdf OK')" 2>/dev/null; then
+    log_info "pymupdf installé avec succès"
 else
-    log_error "Problème avec l'installation de pdfplumber"
+    log_error "Problème avec l'installation de pymupdf"
     exit 1
-fi
-
-if python -c "import spacy; print('✅ spaCy OK')" 2>/dev/null; then
-    log_info "spaCy installé avec succès"
-else
-    log_warning "spaCy installé mais le modèle français pourrait ne pas être disponible"
 fi
 
 # Test du script parser

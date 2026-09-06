@@ -55,10 +55,6 @@ jobs:
           # Install Python dependencies
           pip install -r scripts/requirements.txt
           
-          # Verify installations
-          python -c "import pdfplumber; print('✅ pdfplumber OK')"
-          python -c "import spacy; print('✅ spaCy OK')" || echo "⚠️ spaCy installed but French model may not be available"
-
       - name: 🔍 Type checking
         run: npm run type-check
 
