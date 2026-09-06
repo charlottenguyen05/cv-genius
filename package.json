@@ -22,14 +22,14 @@
     "ci-local": "./scripts/pre-push.sh"
   },
   "dependencies": {
+    "@aws-sdk/client-lambda": "^3.1127.0",
     "@google/genai": "^1.9.0",
+    "@react-pdf/renderer": "^4.6.1",
     "@supabase/supabase-js": "^2.38.0",
-    "@types/jspdf": "^1.3.3",
     "@types/node": "^20.19.8",
     "autoprefixer": "^10.0.1",
     "clsx": "^2.0.0",
     "formidable": "^3.5.4",
-    "jspdf": "^3.0.1",
     "lucide-react": "^0.294.0",
     "next": "^14.2.31",
     "next-router-mock": "^1.0.2",

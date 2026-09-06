@@ -4,6 +4,11 @@ import { signIn, signUp } from "../supabase/client";
 import { validatePassword } from "../utils";
 import { UseAuthFormReturn } from "@/types";
 
+/**
+ * Manages form state and submission logic for login and registration.
+ * Handles email/password input, password validation on register,
+ * error reporting, loading state, and toast notifications.
+ */
 export default function useAuthForm(
   mode: "login" | "register"
 ): UseAuthFormReturn {

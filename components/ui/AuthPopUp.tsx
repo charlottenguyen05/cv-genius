@@ -34,7 +34,7 @@ const AuthPopUp: React.FC<AuthPopUpProps> = ({ isOpen, onClose, formData }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="auth-popup">
-      <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4 relative">
+      <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full mx-4 relative border border-gray-100">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -47,7 +47,7 @@ const AuthPopUp: React.FC<AuthPopUpProps> = ({ isOpen, onClose, formData }) => {
 
         {/* Content */}
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl font-black text-gray-900 tracking-tight mb-3">
             Authentification requise
           </h2>
           <p className="text-gray-600 mb-8">

@@ -32,6 +32,8 @@ export const createResumeAdmin = async (resumeData: {
   user_id?: string | null;
   title: string;
   generated_content: string;
+  display_name?: string | null;
+  language?: string | null;
 }) => {
   const { data, error } = await supabaseAdmin
     .from("resumes")
@@ -39,6 +41,8 @@ export const createResumeAdmin = async (resumeData: {
       user_id: resumeData.user_id || null,
       title: resumeData.title,
       generated_content: resumeData.generated_content,
+      display_name: resumeData.display_name || null,
+      language: resumeData.language || null,
       created_at: new Date().toISOString(),
     })
     .select();

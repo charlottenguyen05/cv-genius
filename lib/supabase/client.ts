@@ -111,3 +111,66 @@ export const getResumeById = async (id: string) => {
 
   return data
 }
+
+// Get all resumes for a user, ordered by newest first
+export const getResumesByUser = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('resumes')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching resumes:', error.message)
+    throw new Error(`Failed to fetch resumes: ${error.message}`)
+  }
+
+  return data
+}
+
+// Delete a resume (storage file + database record)
+export const deleteResume = async (id: string, storagePath: string) => {
+  // Delete file from storage bucket
+  const { error: storageError } = await supabase.storage
+    .from('cv-files')
+    .remove([storagePath])
+
+  if (storageError) {
+    console.error('Error deleting file from storage:', storageError.message)
+    // Continue to delete DB record even if storage delete fails
+  }
+
+  // Delete record from database
+  const { error: dbError } = await supabase
+    .from('resumes')
+    .delete()
+    .eq('id', id)
+
+  if (dbError) {
+    console.error('Error deleting resume record:', dbError.message)
+    throw new Error(`Failed to delete resume: ${dbError.message}`)
+  }
+}
+
+// Update the display name of a resume via the server API (bypasses RLS)
+export const updateResumeDisplayName = async (id: string, newName: string) => {
+  // Get the current session token to authenticate the API call
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    throw new Error('Not authenticated')
+  }
+
+  const res = await fetch(`/api/resume/${id}/rename`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ display_name: newName }),
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error || `Failed to update resume name (${res.status})`)
+  }
+}

@@ -1,20 +1,13 @@
 import { POST } from "../../../app/api/cv/generate/route";
 import { NextRequest } from "next/server";
-import jsPDF from "jspdf";
+import { generatePDFBuffer } from "@/lib/resume-template/pdf-compiler";
 import { uploadPdfToStorageAdmin, createResumeAdmin } from "@/lib/supabase/server";
 import type { CVFormData } from "@/types";
 
-// Mock jsPDF
-jest.mock("jspdf", () => {
-  return jest.fn().mockImplementation(() => ({
-    setFont: jest.fn(),
-    setFontSize: jest.fn(),
-    text: jest.fn(),
-    line: jest.fn(),
-    getTextWidth: jest.fn().mockReturnValue(50),
-    output: jest.fn().mockReturnValue(new ArrayBuffer(100)),
-  }));
-});
+// Mock PDF compiler
+jest.mock("@/lib/resume-template/pdf-compiler", () => ({
+  generatePDFBuffer: jest.fn().mockResolvedValue(Buffer.from("mock-pdf-buffer")),
+}));
 
 // Mock Supabase to avoid ES module issues
 jest.mock("@supabase/supabase-js", () => ({
@@ -280,15 +273,11 @@ describe("Helper Functions Integration Tests", () => {
   });
 
   describe("PDF generation function behavior", () => {
-    it("should call jsPDF with correct configuration", async () => {
+    it("should call generatePDFBuffer with correct configuration", async () => {
       const req = createRequest({ cvData: validCV }, { authorization: "Bearer mock-token" });
       await POST(req);
 
-      expect(jsPDF).toHaveBeenCalledWith({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
+      expect(generatePDFBuffer).toHaveBeenCalledWith(validCV);
     });
 
     it("should handle CV with minimal data", async () => {
@@ -393,7 +382,7 @@ describe("Helper Functions Integration Tests", () => {
       const res = await POST(req);
 
       expect(res.status).toBe(200);
-      expect(jsPDF).toHaveBeenCalled();
+      expect(generatePDFBuffer).toHaveBeenCalled();
     });
 
     it("should handle undefined skills array", async () => {
@@ -504,7 +493,7 @@ describe("Helper Functions Integration Tests", () => {
       const res = await POST(req);
 
       expect(res.status).toBe(200);
-      expect(jsPDF).toHaveBeenCalled();
+      expect(generatePDFBuffer).toHaveBeenCalled();
     });
 
     it("should handle special characters in text", async () => {

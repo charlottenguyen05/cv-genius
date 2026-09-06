@@ -103,12 +103,6 @@ function logFileReceived(file: File): void {
 async function ensureTmpDirectory(): Promise<void> {
   const tmpPath = getTmpDirectoryPath();
 
-  // In serverless environments, /tmp always exists, no need to create it
-  if (process.env.VERCEL === "1" || process.env.AWS_LAMBDA_FUNCTION_NAME) {
-    console.log("✅ Using system /tmp directory (serverless environment)");
-    return;
-  }
-
   try {
     await access(tmpPath);
     console.log("✅ tmp folder already exists");
@@ -159,15 +153,9 @@ function generateTempFilePath(): string {
 }
 
 /**
- * Gets the tmp directory path - uses system /tmp for serverless environments
+ * Gets the tmp directory path for storing temporary PDF files
  */
 function getTmpDirectoryPath(): string {
-  // In serverless environments like Vercel, use the system /tmp directory
-  // which is the only writable location
-  if (process.env.VERCEL === "1" || process.env.AWS_LAMBDA_FUNCTION_NAME) {
-    return "/tmp";
-  }
-  // For local development, use project's tmp directory
   return join(process.cwd(), "tmp");
 }
 
@@ -192,6 +180,7 @@ function logParsingSuccess(formattedData: CVFormData): void {
     personalInfo: Object.keys(formattedData.personalInfo).length,
     experiences: formattedData.experiences.length,
     education: formattedData.education.length,
+    projects: formattedData.projects?.length || 0,
     skills: formattedData.skills.length,
     languages: formattedData.languages?.length || 0,
   });
@@ -319,10 +308,10 @@ function getPythonPaths() {
     "pdf_parser_improved.py"
   );
 
-  // Use system python on Vercel, local venv in development
-  const isVercel = process.env.VERCEL || process.env.NODE_ENV === "production";
-  const venvPython = isVercel
-    ? "python3" // Vercel provides python3 globally
+  // Resolve venv Python path — differs between Windows and Unix
+  const isWindows = process.platform === "win32";
+  const venvPython = isWindows
+    ? join(process.cwd(), "venv", "Scripts", "python.exe")
     : join(process.cwd(), "venv", "bin", "python");
 
   return { venvPython, improvedScript };
@@ -341,6 +330,7 @@ function createPythonProcess(
     cwd: process.cwd(),
     env: {
       ...process.env,
+      PYTHONIOENCODING: "utf-8",
       PYTHONPATH: join(
         process.cwd(),
         "venv",
@@ -375,11 +365,11 @@ function setupProcessListeners(
 ) {
   // Collecte des données de sortie
   pythonProcess.stdout.on("data", (data: Buffer) => {
-    outputCollector.stdout += data.toString();
+    outputCollector.stdout += data.toString("utf-8");
   });
 
   pythonProcess.stderr.on("data", (data: Buffer) => {
-    outputCollector.stderr += data.toString();
+    outputCollector.stderr += data.toString("utf-8");
   });
 
   // Gestion de la fin du processus
@@ -458,11 +448,11 @@ function runFallbackPython(
     const fallbackCollector = createOutputCollector();
 
     fallbackProcess.stdout.on("data", (data: Buffer) => {
-      fallbackCollector.stdout += data.toString();
+      fallbackCollector.stdout += data.toString("utf-8");
     });
 
     fallbackProcess.stderr.on("data", (data: Buffer) => {
-      fallbackCollector.stderr += data.toString();
+      fallbackCollector.stderr += data.toString("utf-8");
     });
 
     fallbackProcess.on("close", (code: number) => {
@@ -518,6 +508,7 @@ function formatParsedData(rawData: any): CVFormData {
     personalInfo: formatPersonalInfo(rawData.personalInfo),
     experiences: formatExperiences(rawData.experiences),
     education: formatEducation(rawData.education),
+    projects: formatProjects(rawData.projects),
     skills: formatSkills(rawData.skills),
     languages: formatLanguages(rawData.languages),
   };
@@ -568,6 +559,20 @@ function formatEducation(education: any[]) {
     startDate: edu.startDate || "",
     endDate: edu.endDate || "",
     description: edu.description || "",
+  }));
+}
+
+/**
+ * Formats projects data
+ */
+function formatProjects(projects: any[]) {
+  return (projects || []).map((proj: any, index: number) => ({
+    id: proj.id || `proj-${Date.now()}-${index}`,
+    name: proj.name || "",
+    technologies: proj.technologies || "",
+    startDate: proj.startDate || "",
+    endDate: proj.endDate || "",
+    description: proj.description || "",
   }));
 }
 

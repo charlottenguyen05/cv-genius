@@ -2,6 +2,169 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Google Fonts ───────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* ── CSS Variables ─────────────────────────────── */
+:root {
+  --green-primary: #4CAF50;
+  --green-bright:  #6DC24B;
+  --green-dark:    #1E4D2B;
+  --dark:          #111111;
+  --surface-tint:  #F5F9F0;
+  --text-primary:  #1A1A1A;
+  --text-muted:    #666666;
+  --border-light:  #E5E7EB;
+}
+
+/* ── Base ──────────────────────────────────────── */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white text-gray-900 font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ── Components ────────────────────────────────── */
+@layer components {
+
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center
+           bg-primary-500 hover:bg-primary-600
+           text-white font-semibold
+           px-6 py-3 rounded-full
+           transition-all duration-200
+           shadow-sm hover:shadow-md
+           active:scale-95;
+  }
+
+  .btn-dark {
+    @apply inline-flex items-center justify-center
+           bg-dark text-white font-semibold
+           px-6 py-3 rounded-full
+           transition-all duration-200
+           hover:bg-gray-800
+           active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center
+           bg-white hover:bg-gray-50
+           text-gray-900 font-medium
+           px-5 py-2.5 rounded-full
+           border border-gray-200
+           transition-all duration-200
+           active:scale-95;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
+  }
+
+  .card-dark {
+    @apply bg-dark-card rounded-2xl p-6 text-white;
+  }
+
+  .card-tint {
+    @apply bg-surface-tint rounded-2xl p-6;
+  }
+
+  /* Corner-bracket stat card (image 1 style) */
+  .corner-bracket {
+    position: relative;
+  }
+  .corner-bracket::before,
+  .corner-bracket::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-color: #1E4D2B;
+    border-style: solid;
+  }
+  .corner-bracket::before {
+    top: 0; left: 0;
+    border-width: 2px 0 0 2px;
+    border-radius: 2px 0 0 0;
+  }
+  .corner-bracket::after {
+    bottom: 0; right: 0;
+    border-width: 0 2px 2px 0;
+    border-radius: 0 0 2px 0;
+  }
+
+  /* Section label (// label //) */
+  .section-label {
+    @apply text-sm font-medium text-gray-500 tracking-widest italic;
+  }
+
+  /* Floating profile card */
+  .profile-card {
+    @apply bg-white rounded-xl shadow-lg border border-gray-100
+           px-4 py-3 flex items-center gap-3 min-w-max;
+  }
+
+  /* Navbar pill */
+  .nav-pill {
+    @apply bg-white border border-gray-200 rounded-full shadow-sm;
+  }
+}
+
+/* ── Animations ─────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+.text-shimmer {
+  background: linear-gradient(90deg, #4CAF50, #6DC24B, #4CAF50);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+/* ── Logo bar grayscale → hover color ────────────── */
+.logo-item {
+  @apply opacity-50 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-300;
+}
+
+/* ── Radial green glow (hero bg) ─────────────────── */
+.hero-glow {
+  background: radial-gradient(ellipse 60% 50% at 50% 60%, rgba(76,175,80,0.12) 0%, transparent 70%);
+}
+
+/* ── Grid pattern overlay ─────────────────────────── */
+.grid-overlay {
+  background-image:
+    linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;

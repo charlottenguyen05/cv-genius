@@ -58,6 +58,7 @@ export interface Experience {
 export interface Education {
   id: string
   institution: string
+  location?: string
   degree: string
   field?: string
   startDate: string
@@ -76,6 +77,15 @@ export interface Language {
   id: string
   name: string
   level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' | 'native'
+}
+
+export interface Project {
+  id: string
+  name: string
+  technologies: string   // comma-separated: "Python, Flask, React"
+  startDate: string
+  endDate?: string
+  description: string    // bullet points separated by \n
 }
 
 // Types pour l'API Gemini
@@ -105,8 +115,10 @@ export interface CVFormData {
   personalInfo: Partial<PersonalInfo>
   experiences: Partial<Experience>[]
   education: Partial<Education>[]
+  projects?: Partial<Project>[]        // NEW
   skills: Partial<Skill>[]
   languages?: Partial<Language>[]
+  outputLanguage?: 'fr' | 'en'         // NEW — user's chosen output language
 }
 
 // Types pour les API routes
