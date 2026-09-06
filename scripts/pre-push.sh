@@ -115,17 +115,11 @@ if [ -f "scripts/requirements.txt" ]; then
 import sys
 sys.path.append('scripts')
 try:
-    import pdfplumber
-    print('✅ pdfplumber OK')
+    import pymupdf
+    print('✅ pymupdf OK')
 except ImportError as e:
-    print(f'❌ pdfplumber import error: {e}')
+    print(f'❌ pymupdf import error: {e}')
     sys.exit(1)
-    
-try:
-    import spacy
-    print('✅ spaCy OK')
-except ImportError as e:
-    print('⚠️ spaCy installed but may have issues')
 " || {
         print_error "Python dependencies test failed"
         exit 1

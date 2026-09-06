@@ -5,7 +5,7 @@ FROM public.ecr.aws/lambda/python:3.12
 # Copy the Python requirements into Lambda's working directory
 COPY scripts/requirements.txt ${LAMBDA_TASK_ROOT}/requirements.txt
 
-# Install pdfplumber + spaCy + French model (baked permanently into the image)
+# Install Python dependencies (baked permanently into the image)
 RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
 
 # Copy the PDF parser script
