@@ -204,7 +204,7 @@ async function runPythonParser(fileBuffer: Buffer): Promise<any> {
   const pdf_base64 = fileBuffer.toString("base64");
 
   const lambdaClient = new LambdaClient({
-    region: process.env.AWS_REGION ?? "eu-west-1",
+    region: process.env.AWS_REGION ?? "eu-west-3",
   });
 
   const command = new InvokeCommand({
