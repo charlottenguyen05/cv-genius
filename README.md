@@ -10,7 +10,7 @@
 
 ## What the project does
 
-**CV Genius** is a state-of-the-art, ATS-optimized Resume/CV builder and parser platform. It allows job seekers to upload their existing CVs in PDF format, accurately extracts their experiences and skills using a robust Python-based AWS Lambda backend, and then reconstructs, enhances, and manages the content using AI (Google Gemini) and a sleek React frontend. 
+**CV Genius** is a ATS-optimized Resume/CV builder and parser platform. It allows job seekers to upload their existing CVs in PDF format, accurately extracts their experiences and skills using a robust Python-based AWS Lambda backend, and then reconstructs, enhances, and manages the content using AI (Google Gemini) and a sleek React frontend. 
 
 ## Why the project is useful
 
