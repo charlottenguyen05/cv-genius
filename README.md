@@ -1,4 +1,4 @@
-# CV Genius 🚀
+# CV Genius
 
 ![Next.js](https://img.shields.io/badge/Next.js-14.2-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-18-blue?logo=react)
