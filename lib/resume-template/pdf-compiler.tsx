@@ -11,7 +11,7 @@ import './fonts'; // Register fonts
 //   4. If pages > 1 and scale > SCALE_MIN, reduce scale by SCALE_STEP and retry.
 //   5. Give up (best-effort) when scale hits SCALE_MIN or PDF is already 1 page.
 // ---------------------------------------------------------------------------
-const SCALE_MIN = 0.80;  // 8pt readability floor
+const SCALE_MIN = 1.0;  // 10pt readability floor — never shrink below base scale
 const SCALE_STEP = 0.05; // reduction increment per retry
 
 /**
@@ -51,7 +51,7 @@ export async function generatePDFBuffer(cvData: CVFormData): Promise<Buffer> {
             // Return the buffer as-is (may be 2 pages for extreme content).
             console.warn(
                 `[pdf-compiler] Could not fit content on 1 page at scale=${scale}. ` +
-                `Returning best-effort PDF (${pages} pages).`
+                `Content is too dense to fit in 1 page while respecting 10pt minimum font size. Returning best-effort PDF (${pages} pages).`
             );
             return buffer;
         }
