@@ -128,27 +128,24 @@ export const getResumesByUser = async (userId: string) => {
   return data
 }
 
-// Delete a resume (storage file + database record)
-export const deleteResume = async (id: string, storagePath: string) => {
-  // Delete file from storage bucket
-  const { error: storageError } = await supabase.storage
-    .from('cv-files')
-    .remove([storagePath])
-
-  if (storageError) {
-    console.error('Error deleting file from storage:', storageError.message)
-    // Continue to delete DB record even if storage delete fails
+// Delete a resume (storage file + database record) via server API route (bypasses RLS)
+export const deleteResume = async (id: string, _storagePath: string) => {
+  // Get the current session token to authenticate the API call
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    throw new Error('Not authenticated')
   }
 
-  // Delete record from database
-  const { error: dbError } = await supabase
-    .from('resumes')
-    .delete()
-    .eq('id', id)
+  const res = await fetch(`/api/resume/${id}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  })
 
-  if (dbError) {
-    console.error('Error deleting resume record:', dbError.message)
-    throw new Error(`Failed to delete resume: ${dbError.message}`)
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error || `Failed to delete resume (${res.status})`)
   }
 }
 
