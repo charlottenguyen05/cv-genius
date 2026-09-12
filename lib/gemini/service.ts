@@ -30,6 +30,16 @@ RÈGLES ABSOLUES :
 7. Maximum 3 catégories différentes dans la section "skills"
 8. PRÉSERVE STRICTEMENT tous les accents (é, è, ê, à, â, ç, etc.) et caractères spéciaux dans le texte généré.
 9. Rédige tout le contenu amélioré en ${targetLanguage}.
+10. Le CV DOIT tenir sur UNE SEULE PAGE. Respecte impérativement le budget de contenu ci-dessous.
+
+BUDGET UNE PAGE (OBLIGATOIRE) :
+- "experiences" : maximum 4 entrées ; chaque "description" = maximum 3 points séparés par \\n, chaque point ≤ 100 caractères
+- "education" : maximum 2 entrées ; chaque "description" = maximum 2 points séparés par \\n, chaque point ≤ 100 caractères
+- "projects" : maximum 3 entrées ; chaque "description" = maximum 3 points séparés par \\n, chaque point ≤ 100 caractères
+- "skills" : maximum 3 catégories, maximum 6 compétences par catégorie
+- "languages" : maximum 5 entrées
+- Si l'utilisateur a fourni plus d'entrées que le budget, garde uniquement les plus récentes/pertinentes
+- Garde les bullets concis : préfère la concision à l'exhaustivité
 
 AMÉLIORATIONS À APPORTER :
 - Utilise des verbes d'action puissants (développé, optimisé, dirigé, etc.)
