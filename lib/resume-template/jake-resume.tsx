@@ -5,7 +5,7 @@ import { CVFormData } from '@/types';
 // One-page enforcement: compute a scale factor from content density.
 // Scale is clamped between SCALE_MIN (readability floor → 8pt) and 1.0.
 // ---------------------------------------------------------------------------
-const SCALE_MIN = 0.80; // 0.80 × 10pt base = 8pt — never go below this
+const SCALE_MIN = 1.0; // Never scale below 1.0 — 10pt is the readability floor
 
 function countBullets(text?: string): number {
     if (!text) return 0;
@@ -40,7 +40,7 @@ export function computeScale(cvData: CVFormData): number {
 // Style builder — returns a fresh object scaled by `s`
 // ---------------------------------------------------------------------------
 function buildStyles(s: number) {
-    const fs = (base: number) => Math.max(8, Math.round(base * s));
+    const fs = (base: number) => Math.max(10, Math.round(base * s));
     const sp = (base: number) => Math.round(base * s);
 
     return {
