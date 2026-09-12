@@ -47,13 +47,13 @@ function buildStyles(s: number) {
         page: {
             fontFamily: 'CMU Serif',
             fontSize: fs(10),
-            paddingTop: sp(36),
-            paddingBottom: sp(36),
-            paddingLeft: sp(36),
-            paddingRight: sp(36),
+            paddingTop: sp(28),
+            paddingBottom: sp(28),
+            paddingLeft: sp(32),
+            paddingRight: sp(32),
         },
         headerName: {
-            fontSize: fs(24),
+            fontSize: fs(22),
             fontWeight: 'bold' as const,
             textAlign: 'center' as const,
             textTransform: 'uppercase' as const,
@@ -62,23 +62,23 @@ function buildStyles(s: number) {
         contactRow: {
             textAlign: 'center' as const,
             fontSize: fs(9),
-            marginTop: sp(2),
+            marginTop: sp(1),
         },
         sectionTitle: {
-            fontSize: fs(12),
+            fontSize: fs(11),
             fontWeight: 'bold' as const,
             textTransform: 'uppercase' as const,
             letterSpacing: 1 * s,
             borderBottomWidth: 0.5,
             borderBottomColor: '#000',
-            paddingBottom: sp(2),
-            marginTop: sp(8),
-            marginBottom: sp(4),
+            paddingBottom: sp(1),
+            marginTop: sp(5),
+            marginBottom: sp(2),
         },
         subheadingRow: {
             flexDirection: 'row' as const,
             justifyContent: 'space-between' as const,
-            marginTop: sp(4),
+            marginTop: sp(2),
         },
         subheadingLeft: {
             fontWeight: 'bold' as const,
@@ -103,14 +103,14 @@ function buildStyles(s: number) {
         },
         bulletItem: {
             flexDirection: 'row' as const,
-            marginLeft: sp(15),
-            marginTop: sp(1),
+            marginLeft: sp(12),
+            marginTop: sp(0),
         },
         bullet: { width: sp(8), fontSize: fs(9) },
         bulletText: { flex: 1, fontSize: fs(9) },
         skillRow: {
             flexDirection: 'row' as const,
-            marginLeft: sp(10),
+            marginLeft: sp(8),
             marginTop: sp(1),
         },
         skillCategory: { fontWeight: 'bold' as const, fontSize: fs(9) },
@@ -165,7 +165,7 @@ export const JakeResumeDocument = ({ cvData, scale }: { cvData: CVFormData; scal
         <Document>
             <Page size="LETTER" style={styles.page}>
                 {/* Header */}
-                <View style={{ marginBottom: Math.round(8 * s) }}>
+                <View style={{ marginBottom: Math.round(4 * s) }}>
                     <Text style={styles.headerName}>{personalInfo?.name || 'VOTRE NOM'}</Text>
                     <View style={styles.contactRow}>
                         <Text>
@@ -184,7 +184,7 @@ export const JakeResumeDocument = ({ cvData, scale }: { cvData: CVFormData; scal
                     <View>
                         <Text style={styles.sectionTitle}>{t.education}</Text>
                         {education.map((edu) => (
-                            <View key={edu.id} style={{ marginBottom: Math.round(4 * s) }}>
+                            <View key={edu.id} style={{ marginBottom: Math.round(2 * s) }}>
                                 <View style={styles.subheadingRow}>
                                     <Text style={styles.subheadingLeft}>{edu.institution}</Text>
                                     <Text style={styles.subheadingRight}>{edu.location || ''}</Text>
@@ -213,7 +213,7 @@ export const JakeResumeDocument = ({ cvData, scale }: { cvData: CVFormData; scal
                     <View>
                         <Text style={styles.sectionTitle}>{t.experience}</Text>
                         {experiences.map((exp) => (
-                            <View key={exp.id} style={{ marginBottom: Math.round(4 * s) }}>
+                            <View key={exp.id} style={{ marginBottom: Math.round(2 * s) }}>
                                 <View style={styles.subheadingRow}>
                                     <Text style={styles.subheadingLeft}>{exp.position}</Text>
                                     <Text style={styles.subheadingRight}>
@@ -240,7 +240,7 @@ export const JakeResumeDocument = ({ cvData, scale }: { cvData: CVFormData; scal
                     <View>
                         <Text style={styles.sectionTitle}>{t.projects}</Text>
                         {projects.map((proj) => (
-                            <View key={proj.id} style={{ marginBottom: Math.round(4 * s) }}>
+                            <View key={proj.id} style={{ marginBottom: Math.round(2 * s) }}>
                                 <View style={styles.subheadingRow}>
                                     <Text style={styles.subheadingLeft}>
                                         {proj.name} {proj.technologies && <Text style={{ fontWeight: 'normal' }}>| <Text style={{ fontStyle: 'italic' }}>{proj.technologies}</Text></Text>}
