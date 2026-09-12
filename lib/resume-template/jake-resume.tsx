@@ -1,73 +1,128 @@
-import { Document, Page, View, Text, Link, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, View, Text, Link } from '@react-pdf/renderer';
 import { CVFormData } from '@/types';
 
-// Styles replicating Jake's Resume LaTeX layout
-const styles = StyleSheet.create({
-    page: {
-        fontFamily: 'CMU Serif',
-        fontSize: 10,
-        paddingTop: 36,    // ~0.5in
-        paddingBottom: 36,
-        paddingLeft: 36,
-        paddingRight: 36,
-    },
-    // -- HEADER --
-    headerName: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        textTransform: 'uppercase',   // small-caps approximation
-        letterSpacing: 1.5,
-    },
-    contactRow: {
-        textAlign: 'center',
-        fontSize: 9,
-        marginTop: 2,
-    },
-    // -- SECTION --
-    sectionTitle: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-        borderBottomWidth: 0.5,
-        borderBottomColor: '#000',
-        paddingBottom: 2,
-        marginTop: 8,
-        marginBottom: 4,
-    },
-    // -- SUBHEADING (Experience/Education) --
-    subheadingRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 4,
-    },
-    subheadingLeft: { fontWeight: 'bold', fontSize: 10, flex: 1, paddingRight: 8 },
-    subheadingRight: { fontSize: 10, flexShrink: 0, textAlign: 'right' },
-    subheadingRow2: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    subheadingItalic: { fontStyle: 'italic', fontSize: 9, flex: 1, paddingRight: 8 },
-    // -- BULLET ITEMS --
-    bulletItem: {
-        flexDirection: 'row',
-        marginLeft: 15,
-        marginTop: 1,
-    },
-    bullet: { width: 8, fontSize: 9 },
-    bulletText: { flex: 1, fontSize: 9 },
-    // -- SKILLS --
-    skillRow: {
-        flexDirection: 'row',
-        marginLeft: 10,
-        marginTop: 1,
-    },
-    skillCategory: { fontWeight: 'bold', fontSize: 9 },
-    skillList: { fontSize: 9 },
-});
+// ---------------------------------------------------------------------------
+// One-page enforcement: compute a scale factor from content density.
+// Scale is clamped between SCALE_MIN (readability floor → 8pt) and 1.0.
+// ---------------------------------------------------------------------------
+const SCALE_MIN = 0.80; // 0.80 × 10pt base = 8pt — never go below this
 
-export const JakeResumeDocument = ({ cvData }: { cvData: CVFormData }) => {
+function countBullets(text?: string): number {
+    if (!text) return 0;
+    return text.split('\n').filter(l => l.trim().length > 0).length;
+}
+
+export function computeScale(cvData: CVFormData): number {
+    const expBullets = (cvData.experiences || []).reduce((n, e) => n + countBullets(e.description), 0);
+    const eduBullets = (cvData.education || []).reduce((n, e) => n + countBullets(e.description), 0);
+    const projBullets = (cvData.projects || []).reduce((n, e) => n + countBullets(e.description), 0);
+    const expCount = (cvData.experiences || []).length;
+    const eduCount = (cvData.education || []).length;
+    const projCount = (cvData.projects || []).length;
+    const skillCats = new Set((cvData.skills || []).map(s => s.category || 'Technical')).size;
+
+    // Each heading block ≈ 2 units; each bullet ≈ 1 unit; skill/lang row ≈ 1 unit
+    const weight =
+        (expCount * 2 + expBullets) +
+        (eduCount * 2 + eduBullets) +
+        (projCount * 2 + projBullets) +
+        skillCats +
+        ((cvData.languages || []).length > 0 ? 1 : 0);
+
+    // Empirically: weight ≤ 24 fits at scale 1.0 on a LETTER page with current styles.
+    // Each extra unit beyond 24 reduces scale by 0.015, floored at SCALE_MIN.
+    const excess = Math.max(0, weight - 24);
+    const scale = Math.max(SCALE_MIN, 1.0 - excess * 0.015);
+    return scale;
+}
+
+// ---------------------------------------------------------------------------
+// Style builder — returns a fresh object scaled by `s`
+// ---------------------------------------------------------------------------
+function buildStyles(s: number) {
+    const fs = (base: number) => Math.max(8, Math.round(base * s));
+    const sp = (base: number) => Math.round(base * s);
+
+    return {
+        page: {
+            fontFamily: 'CMU Serif',
+            fontSize: fs(10),
+            paddingTop: sp(36),
+            paddingBottom: sp(36),
+            paddingLeft: sp(36),
+            paddingRight: sp(36),
+        },
+        headerName: {
+            fontSize: fs(24),
+            fontWeight: 'bold' as const,
+            textAlign: 'center' as const,
+            textTransform: 'uppercase' as const,
+            letterSpacing: 1.5 * s,
+        },
+        contactRow: {
+            textAlign: 'center' as const,
+            fontSize: fs(9),
+            marginTop: sp(2),
+        },
+        sectionTitle: {
+            fontSize: fs(12),
+            fontWeight: 'bold' as const,
+            textTransform: 'uppercase' as const,
+            letterSpacing: 1 * s,
+            borderBottomWidth: 0.5,
+            borderBottomColor: '#000',
+            paddingBottom: sp(2),
+            marginTop: sp(8),
+            marginBottom: sp(4),
+        },
+        subheadingRow: {
+            flexDirection: 'row' as const,
+            justifyContent: 'space-between' as const,
+            marginTop: sp(4),
+        },
+        subheadingLeft: {
+            fontWeight: 'bold' as const,
+            fontSize: fs(10),
+            flex: 1,
+            paddingRight: sp(8),
+        },
+        subheadingRight: {
+            fontSize: fs(10),
+            flexShrink: 0,
+            textAlign: 'right' as const,
+        },
+        subheadingRow2: {
+            flexDirection: 'row' as const,
+            justifyContent: 'space-between' as const,
+        },
+        subheadingItalic: {
+            fontStyle: 'italic' as const,
+            fontSize: fs(9),
+            flex: 1,
+            paddingRight: sp(8),
+        },
+        bulletItem: {
+            flexDirection: 'row' as const,
+            marginLeft: sp(15),
+            marginTop: sp(1),
+        },
+        bullet: { width: sp(8), fontSize: fs(9) },
+        bulletText: { flex: 1, fontSize: fs(9) },
+        skillRow: {
+            flexDirection: 'row' as const,
+            marginLeft: sp(10),
+            marginTop: sp(1),
+        },
+        skillCategory: { fontWeight: 'bold' as const, fontSize: fs(9) },
+        skillList: { fontSize: fs(9) },
+    };
+}
+
+export const JakeResumeDocument = ({ cvData, scale }: { cvData: CVFormData; scale?: number }) => {
+    // Use the provided scale (from server-side guard) or compute it here
+    const s = scale !== undefined ? Math.max(SCALE_MIN, scale) : computeScale(cvData);
+    const styles = buildStyles(s);
+
     const lang = cvData.outputLanguage || 'fr';
 
     const titles = {
@@ -110,7 +165,7 @@ export const JakeResumeDocument = ({ cvData }: { cvData: CVFormData }) => {
         <Document>
             <Page size="LETTER" style={styles.page}>
                 {/* Header */}
-                <View style={{ marginBottom: 8 }}>
+                <View style={{ marginBottom: Math.round(8 * s) }}>
                     <Text style={styles.headerName}>{personalInfo?.name || 'VOTRE NOM'}</Text>
                     <View style={styles.contactRow}>
                         <Text>
@@ -129,7 +184,7 @@ export const JakeResumeDocument = ({ cvData }: { cvData: CVFormData }) => {
                     <View>
                         <Text style={styles.sectionTitle}>{t.education}</Text>
                         {education.map((edu) => (
-                            <View key={edu.id} style={{ marginBottom: 4 }}>
+                            <View key={edu.id} style={{ marginBottom: Math.round(4 * s) }}>
                                 <View style={styles.subheadingRow}>
                                     <Text style={styles.subheadingLeft}>{edu.institution}</Text>
                                     <Text style={styles.subheadingRight}>{edu.location || ''}</Text>
@@ -158,7 +213,7 @@ export const JakeResumeDocument = ({ cvData }: { cvData: CVFormData }) => {
                     <View>
                         <Text style={styles.sectionTitle}>{t.experience}</Text>
                         {experiences.map((exp) => (
-                            <View key={exp.id} style={{ marginBottom: 4 }}>
+                            <View key={exp.id} style={{ marginBottom: Math.round(4 * s) }}>
                                 <View style={styles.subheadingRow}>
                                     <Text style={styles.subheadingLeft}>{exp.position}</Text>
                                     <Text style={styles.subheadingRight}>
@@ -185,7 +240,7 @@ export const JakeResumeDocument = ({ cvData }: { cvData: CVFormData }) => {
                     <View>
                         <Text style={styles.sectionTitle}>{t.projects}</Text>
                         {projects.map((proj) => (
-                            <View key={proj.id} style={{ marginBottom: 4 }}>
+                            <View key={proj.id} style={{ marginBottom: Math.round(4 * s) }}>
                                 <View style={styles.subheadingRow}>
                                     <Text style={styles.subheadingLeft}>
                                         {proj.name} {proj.technologies && <Text style={{ fontWeight: 'normal' }}>| <Text style={{ fontStyle: 'italic' }}>{proj.technologies}</Text></Text>}
