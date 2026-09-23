@@ -193,7 +193,7 @@ export default function HeroSection() {
 
           {/* Video player */}
           <video
-            src="/video/Recording 2026-09-23 135257.mp4"
+            src="/video/demo.mp4"
             controls
             className="demo-dialog__video"
             playsInline
