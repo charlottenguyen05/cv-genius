@@ -13,6 +13,30 @@ export class GeminiService {
   }
 
   /**
+   * Helper method to call Gemini API with exponential backoff for rate limits and service unavailability
+   */
+  private async generateWithRetry(modelOptions: any, maxRetries = 3): Promise<any> {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        return await this.ai.models.generateContent(modelOptions);
+      } catch (error: any) {
+        const isRetryable =
+          error.status === 503 ||
+          error.status === 429 ||
+          (error.message && (error.message.includes('503') || error.message.includes('429')));
+
+        if (isRetryable && attempt < maxRetries - 1) {
+          const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+          console.warn(`Gemini API error (503/429). Retrying in ${delay.toFixed(0)}ms... (Attempt ${attempt + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        throw error;
+      }
+    }
+  }
+
+  /**
    * Améliore un CV complet - FLOW PRINCIPAL
    * Prend un JSON de CV et retourne un JSON amélioré
    */
@@ -115,8 +139,8 @@ ${JSON.stringify(cvData, null, 2)}
 RETOURNE UNIQUEMENT LE JSON AMÉLIORÉ (aucun autre texte) :`;
 
     try {
-      const response = await this.ai.models.generateContent({
-        model: "gemini-3.5-flash",
+      const response = await this.generateWithRetry({
+        model: "gemini-3.5-flash-lite",
         contents: masterPrompt,
       });
 
@@ -245,8 +269,8 @@ Instructions:
 Contenu amélioré:`;
 
     try {
-      const response = await this.ai.models.generateContent({
-        model: "gemini-3.5-flash",
+      const response = await this.generateWithRetry({
+        model: "gemini-3.5-flash-lite",
         contents: prompt,
       });
 
@@ -284,8 +308,8 @@ La description doit être:
 Description:`;
 
     try {
-      const response = await this.ai.models.generateContent({
-        model: "gemini-3.5-flash",
+      const response = await this.generateWithRetry({
+        model: "gemini-3.5-flash-lite",
         contents: prompt,
       });
 

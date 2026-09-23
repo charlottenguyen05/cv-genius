@@ -165,7 +165,7 @@ describe("GeminiService", () => {
       const result = await service.improveCompleteCV(mockCVData);
 
       expect(mockModels.generateContent).toHaveBeenCalledWith({
-        model: "gemini-3.5-flash",
+        model: "gemini-3.5-flash-lite",
         contents: expect.stringContaining(
           "Tu es un expert en rédaction de CV professionnel"
         ),
