@@ -1,7 +1,8 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
-import { Play, Sparkles, FileText } from "lucide-react";
+import { Play, FileText, X } from "lucide-react";
 import useUserStatus from "@/lib/hooks/useUserStatus";
 
 /* ── Floating profile cards — positioned well outside the title zone ── */
@@ -50,9 +51,18 @@ const floatingCards = [
 
 export default function HeroSection() {
   const { user } = useUserStatus();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  const openDemo = () => dialogRef.current?.showModal();
+  const closeDemo = () => {
+    const video = dialogRef.current?.querySelector("video");
+    if (video) { video.pause(); video.currentTime = 0; }
+    dialogRef.current?.close();
+  };
 
   return (
-    <section className="relative min-h-[88vh] flex flex-col items-center justify-center overflow-hidden bg-white pt-10 pb-6">
+    <>
+      <section className="relative min-h-[88vh] flex flex-col items-center justify-center overflow-hidden bg-white pt-10 pb-6">
       {/* ── Soft radial green glow in center ───── */}
       <div className="absolute inset-0 hero-glow pointer-events-none" />
       {/* ── Subtle grid overlay ─────────────────── */}
@@ -125,14 +135,14 @@ export default function HeroSection() {
               Commencer gratuitement
             </Link>
           )}
-          <Link
-            href="/create"
+          <button
+            onClick={openDemo}
             className="btn-dark text-base px-8 py-3.5"
             data-testid="demo-link"
           >
             <Play className="w-4 h-4 mr-2 fill-white" />
             Voir la démo
-          </Link>
+          </button>
         </div>
 
         {/* Social proof strip */}
@@ -160,5 +170,36 @@ export default function HeroSection() {
         </div>
       </div>
     </section>
+
+      {/* ── Video demo dialog ─────────────────────────── */}
+      <dialog
+        ref={dialogRef}
+        className="demo-dialog"
+        onClick={(e) => { if (e.target === dialogRef.current) closeDemo(); }}
+        aria-label="Démonstration CV Genius"
+      >
+        <div className="demo-dialog__panel">
+          {/* Close button */}
+          <button
+            onClick={closeDemo}
+            className="demo-dialog__close"
+            aria-label="Fermer la vidéo"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Title */}
+          <p className="demo-dialog__title">Voir CV Genius en action</p>
+
+          {/* Video player */}
+          <video
+            src="/video/Recording 2026-09-23 135257.mp4"
+            controls
+            className="demo-dialog__video"
+            playsInline
+          />
+        </div>
+      </dialog>
+    </>
   );
 }
