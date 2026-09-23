@@ -49,6 +49,15 @@ class CVGenerationService {
         body: JSON.stringify({ formData: cvData }),
       });
 
+      // Check HTTP-level errors (5xx, 4xx) before trying to parse JSON
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg =
+          errorData.error ||
+          `Erreur HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(errorMsg);
+      }
+
       const result = await response.json();
 
       if (!result.success) {

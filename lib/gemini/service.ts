@@ -246,7 +246,7 @@ Contenu amélioré:`;
 
     try {
       const response = await this.ai.models.generateContent({
-        model: "gemini-3.6-flash",
+        model: "gemini-3.5-flash",
         contents: prompt,
       });
 
@@ -285,7 +285,7 @@ Description:`;
 
     try {
       const response = await this.ai.models.generateContent({
-        model: "gemini-3.6-flash",
+        model: "gemini-3.5-flash",
         contents: prompt,
       });
 

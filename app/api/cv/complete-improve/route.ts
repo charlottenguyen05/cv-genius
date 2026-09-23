@@ -3,6 +3,10 @@ import { geminiService } from "@/lib/gemini/service";
 import type { CVFormData } from "@/types";
 import { parseAndValidateCVRequest, createErrorResponse, logCVDataSummary } from "@/lib/utils/apiRoutes";
 
+// Tell Vercel/AWS Lambda this function may take up to 60 seconds
+// (Gemini AI calls can take 15-30s for large CVs)
+export const maxDuration = 60;
+
 /**
  * API pour améliorer un CV complet avec Gemini
  * Prend un CV JSON et retourne un CV amélioré JSON
